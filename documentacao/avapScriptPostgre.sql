@@ -1,112 +1,124 @@
 -- Criação do schema e configuração do search_path
--- CREATE SCHEMA IF NOT EXISTS peer;
+-- CREATE SCHEMA IF NOT EXISTS loja;
 SET search_path TO public;
 
--- Tabela pessoa (deve ser criada primeiro devido às dependências)
+-- ================================
+-- Tabela pessoa (base para cliente e funcionário)
+-- ================================
 CREATE TABLE pessoa (
-  id_pessoa SERIAL PRIMARY KEY,
-  nome_pessoa VARCHAR(50) NOT NULL,
-  email_pessoa VARCHAR(70) NOT NULL UNIQUE,
-  senha_pessoa VARCHAR(32) NOT NULL,
-  primeiro_acesso_pessoa BOOLEAN NOT NULL DEFAULT TRUE,
-  data_nascimento TIMESTAMP DEFAULT NULL
+    cpf VARCHAR(11) PRIMARY KEY,
+    nome_pessoa VARCHAR(100) NOT NULL,
+    email_pessoa VARCHAR(100) NOT NULL UNIQUE,
+    senha_pessoa VARCHAR(20) NOT NULL
 );
 
--- Tabela professor
-CREATE TABLE professor (
-  pessoa_id_pessoa INTEGER PRIMARY KEY,
-  mnemonico_professor VARCHAR(45) NOT NULL,
-  departamento_professor VARCHAR(45) DEFAULT NULL
+-- ================================
+-- Tabela cliente
+-- ================================
+CREATE TABLE cliente (
+    cpf VARCHAR(11) PRIMARY KEY,
+    FOREIGN KEY (cpf) REFERENCES pessoa(cpf)
+        ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- Tabela avaliado
-CREATE TABLE avaliado (
-  pessoa_id_pessoa INTEGER PRIMARY KEY
+-- ================================
+-- Tabela cargo
+-- ================================
+CREATE TABLE cargo (
+    id_cargo SERIAL PRIMARY KEY,
+    nome_cargo VARCHAR(100) NOT NULL
 );
 
--- Tabela avaliador
-CREATE TABLE avaliador (
-  pessoa_id_pessoa INTEGER PRIMARY KEY
+-- ================================
+-- Tabela funcionario
+-- ================================
+CREATE TABLE funcionario (
+    cpf VARCHAR(11) PRIMARY KEY,
+    id_cargo INT NOT NULL,
+    salario DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (cpf) REFERENCES pessoa(cpf)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_cargo) REFERENCES cargo(id_cargo)
+        ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
--- Tabela questao
-CREATE TABLE questao (
-  id_questao SERIAL PRIMARY KEY,
-  texto_questao VARCHAR(45) NOT NULL,
-  nota_maxima_questao INTEGER NOT NULL,
-  texto_complementar_questao VARCHAR(255) DEFAULT NULL
+-- ================================
+-- Tabela categoria de produtos
+-- ================================
+CREATE TABLE categoria (
+    id_categoria SERIAL PRIMARY KEY,
+    nome_categoria VARCHAR(100) NOT NULL
 );
 
--- Tabela avaliacao
-CREATE TABLE avaliacao (
-  id_avaliacao SERIAL PRIMARY KEY,
-  descricao_avaliacao VARCHAR(45) DEFAULT NULL,
-  data_avaliacao TIMESTAMP NOT NULL,
-  professor_pessoa_id_pessoa INTEGER NOT NULL,
-  porcentagem_tolerancia_avaliacao DOUBLE PRECISION NOT NULL
+-- ================================
+-- Tabela produto
+-- ================================
+CREATE TABLE produto (
+    id_produto SERIAL PRIMARY KEY,
+    nome_produto VARCHAR(100) NOT NULL,
+    preco DECIMAL(10, 2) NOT NULL,
+    id_categoria INT NOT NULL,
+    quantidade_estoque INT NOT NULL,
+    FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria)
+        ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
--- Tabela avaliacao_has_avaliadores
-CREATE TABLE avaliacao_has_avaliadores (
-  avaliacao_id_avaliacao INTEGER NOT NULL,
-  avaliador_pessoa_id_pessoa INTEGER NOT NULL,
-  avaliado_pessoa_id_pessoa INTEGER NOT NULL,
-  nota_avaliacao_has_avaliadores DOUBLE PRECISION NOT NULL,
-  hora_avaliacao_has_avaliadores TIME NOT NULL,
-  jaFoiAvaliado_avaliacao_has_avaliadores BOOLEAN DEFAULT FALSE,
-  PRIMARY KEY (avaliacao_id_avaliacao, avaliador_pessoa_id_pessoa, avaliado_pessoa_id_pessoa)
+-- ================================
+-- Tabela pedido
+-- ================================
+CREATE TABLE pedido (
+    id_pedido SERIAL PRIMARY KEY,
+    cpf VARCHAR(11) NOT NULL,
+    data_pedido DATE NOT NULL,
+    valor_total DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (cpf) REFERENCES pessoa(cpf)
+        ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- Tabela avaliacao_has_questao
-CREATE TABLE avaliacao_has_questao (
-  avaliacao_id_avaliacao INTEGER NOT NULL,
-  questao_id_questao INTEGER NOT NULL,
-  nota_avaliacao_has_questao INTEGER NOT NULL DEFAULT -1,
-  PRIMARY KEY (avaliacao_id_avaliacao, questao_id_questao)
+-- ================================
+-- Tabela pedidoproduto (tabela associativa N:N)
+-- ================================
+CREATE TABLE pedidoproduto (
+    id_produto INT NOT NULL,
+    id_pedido INT NOT NULL,
+    quantidade INT NOT NULL,
+    preco_unitario DECIMAL(10, 2) NOT NULL,
+    PRIMARY KEY (id_produto, id_pedido),
+    FOREIGN KEY (id_produto) REFERENCES produto(id_produto)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_pedido) REFERENCES pedido(id_pedido)
+        ON DELETE CASCADE ON UPDATE CASCADE
+);
+-- ================================
+-- Tabela pagamento
+-- ================================
+CREATE TABLE pagamento (
+    id_pagamento SERIAL PRIMARY KEY,
+    id_pedido INT NOT NULL,
+    data_pagamento DATE NOT NULL,
+    valor_total DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (id_pedido) REFERENCES pedido(id_pedido)
+        ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- Adição das constraints de chave estrangeira
-ALTER TABLE professor ADD CONSTRAINT fk_professor_pessoa1
-  FOREIGN KEY (pessoa_id_pessoa)
-  REFERENCES pessoa (id_pessoa)
-  ON DELETE CASCADE ON UPDATE CASCADE;
+-- ================================
+-- Tabela forma_pagamento
+-- ================================
+CREATE TABLE forma_pagamento (
+    id_forma_pagamento SERIAL PRIMARY KEY,
+    nome_forma VARCHAR(50) NOT NULL
+);
 
-ALTER TABLE avaliado ADD CONSTRAINT fk_avaliado_pessoa1
-  FOREIGN KEY (pessoa_id_pessoa)
-  REFERENCES pessoa (id_pessoa)
-  ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE avaliador ADD CONSTRAINT fk_avaliador_pessoa1
-  FOREIGN KEY (pessoa_id_pessoa)
-  REFERENCES pessoa (id_pessoa)
-  ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE avaliacao ADD CONSTRAINT fk_avaliacao_professor1
-  FOREIGN KEY (professor_pessoa_id_pessoa)
-  REFERENCES professor (pessoa_id_pessoa)
-  ON DELETE RESTRICT ON UPDATE CASCADE;
-
-ALTER TABLE avaliacao_has_avaliadores ADD CONSTRAINT fk_avaliacao_has_avaliadores_avaliacao
-  FOREIGN KEY (avaliacao_id_avaliacao)
-  REFERENCES avaliacao (id_avaliacao)
-  ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE avaliacao_has_avaliadores ADD CONSTRAINT fk_avaliacao_has_avaliadores_avaliado1
-  FOREIGN KEY (avaliado_pessoa_id_pessoa)
-  REFERENCES avaliado (pessoa_id_pessoa)
-  ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE avaliacao_has_avaliadores ADD CONSTRAINT fk_avaliacao_has_avaliadores_avaliador1
-  FOREIGN KEY (avaliador_pessoa_id_pessoa)
-  REFERENCES avaliador (pessoa_id_pessoa)
-  ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE avaliacao_has_questao ADD CONSTRAINT fk_avaliacao_has_questao_avaliacao1
-  FOREIGN KEY (avaliacao_id_avaliacao)
-  REFERENCES avaliacao (id_avaliacao)
-  ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE avaliacao_has_questao ADD CONSTRAINT fk_avaliacao_has_questao_questao1
-  FOREIGN KEY (questao_id_questao)
-  REFERENCES questao (id_questao)
-  ON DELETE CASCADE ON UPDATE CASCADE;
+-- ================================
+-- Tabela pagamento_res (detalhes do pagamento)
+-- ================================
+CREATE TABLE pagamento_has_formapagamento (
+    id_pagamento_res SERIAL PRIMARY KEY,
+    id_pagamento INT NOT NULL,
+    id_forma_pagamento INT NOT NULL,
+    valor_pago DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (id_pagamento) REFERENCES pagamento(id_pagamento)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_forma_pagamento) REFERENCES forma_pagamento(id_forma_pagamento)
+        ON DELETE RESTRICT ON UPDATE CASCADE
+);
