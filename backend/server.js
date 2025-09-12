@@ -101,6 +101,8 @@ app.use('/menu', menuRoutes);
 const cargoRoutes = require('./routes/cargoRoutes');
 app.use('/cargos', cargoRoutes);
 
+const categoriaRoutes = require('./routes/categoriaRoutes');
+app.use('/categorias', categoriaRoutes);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Rota padrão
