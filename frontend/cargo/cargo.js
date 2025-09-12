@@ -5,7 +5,7 @@ let currentPersonId = null;
 let operacao = null;
 
 // Elementos do DOM
-const form = document.getElementById('questaoForm');
+const form = document.getElementById('cargoForm');
 const searchId = document.getElementById('searchId');
 const btnBuscar = document.getElementById('btnBuscar');
 const btnIncluir = document.getElementById('btnIncluir');
