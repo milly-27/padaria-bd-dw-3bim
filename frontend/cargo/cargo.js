@@ -13,19 +13,19 @@ const btnAlterar = document.getElementById('btnAlterar');
 const btnExcluir = document.getElementById('btnExcluir');
 const btnCancelar = document.getElementById('btnCancelar');
 const btnSalvar = document.getElementById('btnSalvar');
-const questoesTableBody = document.getElementById('questoesTableBody');
+const cargosTableBody = document.getElementById('cargosTableBody');
 const messageContainer = document.getElementById('messageContainer');
 
-// Carregar lista de questoes ao inicializar
+// Carregar lista de cargos ao inicializar
 document.addEventListener('DOMContentLoaded', () => {
-    carregarQuestoes();
+    carregarCargos();
 });
 
 // Event Listeners
-btnBuscar.addEventListener('click', buscarQuestao);
-btnIncluir.addEventListener('click', incluirQuestao);
-btnAlterar.addEventListener('click', alterarQuestao);
-btnExcluir.addEventListener('click', excluirQuestao);
+btnBuscar.addEventListener('click', buscarCargo);
+btnIncluir.addEventListener('click', incluirCargo);
+btnAlterar.addEventListener('click', alterarCargo);
+btnExcluir.addEventListener('click', excluirCargo);
 btnCancelar.addEventListener('click', cancelarOperacao);
 btnSalvar.addEventListener('click', salvarOperacao);
 
@@ -81,8 +81,8 @@ function converterDataParaISO(dataString) {
     return new Date(dataString).toISOString();
 }
 
-// Função para buscar questao por ID
-async function buscarQuestao() {
+// Função para buscar cargo por ID
+async function buscarCargo() {
     const id = searchId.value.trim();
     if (!id) {
         mostrarMensagem('Digite um ID para buscar', 'warning');
@@ -92,70 +92,67 @@ async function buscarQuestao() {
     //focus no campo searchId
     searchId.focus();
     try {
-        const response = await fetch(`${API_BASE_URL}/questoes/${id}`);
+        const response = await fetch(`${API_BASE_URL}/cargos/${id}`);
 
         if (response.ok) {
-            const questao = await response.json();
-            preencherFormulario(questao);
+            const cargo = await response.json();
+            preencherFormulario(cargo);
 
             mostrarBotoes(true, false, true, true, false, false);// mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)
-            mostrarMensagem('Questao encontrada!', 'success');
+            mostrarMensagem('Cargo encontrado!', 'success');
 
         } else if (response.status === 404) {
             limparFormulario();
             searchId.value = id;
             mostrarBotoes(true, true, false, false, false, false); //mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)
-            mostrarMensagem('Questao não encontrada. Você pode incluir uma nova questao.', 'info');
+            mostrarMensagem('Cargo não encontrado. Você pode incluir um novo cargo.', 'info');
             bloquearCampos(false);//bloqueia a pk e libera os demais campos
             //enviar o foco para o campo de nome
         } else {
-            throw new Error('Erro ao buscar questao');
+            throw new Error('Erro ao buscar cargo');
         }
     } catch (error) {
         console.error('Erro:', error);
-        mostrarMensagem('Erro ao buscar questao', 'error');
+        mostrarMensagem('Erro ao buscar cargo', 'error');
     }
 }
 
-// Função para preencher formulário com dados da questao
-function preencherFormulario(questao) {
-    currentPersonId = questao.id_questao;
-    searchId.value = questao.id_questao;
-    document.getElementById('texto_questao').value = questao.texto_questao || '';
-    document.getElementById('texto_questao').value = questao.texto_questao || '';
-    document.getElementById('nota_maxima_questao').value = questao.nota_maxima_questao || '';
-    document.getElementById('texto_complementar_questao').value = questao.texto_complementar_questao || '';   
-}
+// Função para preencher formulário com dados da cargo
+function preencherFormulario(cargo) {
+    currentPersonId = cargo.id_cargo;
+    searchId.value = cargo.id_cargo;
+    document.getElementById('nome_cargo').value = cargo.nome_cargo || '';
+    }
 
 
-// Função para incluir questao
-async function incluirQuestao() {
+// Função para incluir cargo
+async function incluirCargo() {
 
     mostrarMensagem('Digite os dados!', 'success');
     currentPersonId = searchId.value;
-    // console.log('Incluir nova questao - currentPersonId: ' + currentPersonId);
+    // console.log('Incluir nova cargo - currentPersonId: ' + currentPersonId);
     limparFormulario();
     searchId.value = currentPersonId;
     bloquearCampos(true);
 
     mostrarBotoes(false, false, false, false, true, true); // mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)
-    document.getElementById('texto_questao').focus();
+    document.getElementById('nome_cargo').focus();
     operacao = 'incluir';
-    // console.log('fim nova questao - currentPersonId: ' + currentPersonId);
+    // console.log('fim nova cargo - currentPersonId: ' + currentPersonId);
 }
 
-// Função para alterar questao
-async function alterarQuestao() {
+// Função para alterar cargo
+async function alterarCargo() {
     mostrarMensagem('Digite os dados!', 'success');
     bloquearCampos(true);
     mostrarBotoes(false, false, false, false, true, true);// mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)
-    document.getElementById('texto_questao').focus();
+    document.getElementById('nome_cargo').focus();
     operacao = 'alterar';
 }
 
-// Função para excluir questao
-async function excluirQuestao() {
-    mostrarMensagem('Excluindo questao...', 'info');
+// Função para excluir cargo
+async function excluirCargo() {
+    mostrarMensagem('Excluindo cargo...', 'info');
     currentPersonId = searchId.value;
     //bloquear searchId
     searchId.disabled = true;
@@ -168,54 +165,52 @@ async function salvarOperacao() {
     console.log('Operação:', operacao + ' - currentPersonId: ' + currentPersonId + ' - searchId: ' + searchId.value);
 
     const formData = new FormData(form);
-    const questao = {
-        id_questao: searchId.value,
-        texto_questao: formData.get('texto_questao'),
-        nota_maxima_questao: formData.get('nota_maxima_questao'),
-        texto_complementar_questao: formData.get('texto_complementar_questao')        
+    const cargo = {
+        id_cargo: searchId.value,
+        nome_cargo: formData.get('nome_cargo')      
     };
     let response = null;
     try {
         if (operacao === 'incluir') {
-            response = await fetch(`${API_BASE_URL}/questoes`, {
+            response = await fetch(`${API_BASE_URL}/cargos`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(questao)
+                body: JSON.stringify(cargo)
             });
         } else if (operacao === 'alterar') {
-            response = await fetch(`${API_BASE_URL}/questoes/${currentPersonId}`, {
+            response = await fetch(`${API_BASE_URL}/cargos/${currentPersonId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(questao)
+                body: JSON.stringify(cargo)
             });
         } else if (operacao === 'excluir') {
-            // console.log('Excluindo questao com ID:', currentPersonId);
-            response = await fetch(`${API_BASE_URL}/questoes/${currentPersonId}`, {
+            // console.log('Excluindo cargo com ID:', currentPersonId);
+            response = await fetch(`${API_BASE_URL}/cargos/${currentPersonId}`, {
                 method: 'DELETE'
             });
-            console.log('Questao excluída' + response.status);
+            console.log('Cargo excluído' + response.status);
         }
         if (response.ok && (operacao === 'incluir' || operacao === 'alterar')) {
-            const novaQuestao = await response.json();
+            const novaCargo = await response.json();
             mostrarMensagem('Operação ' + operacao + ' realizada com sucesso!', 'success');
             limparFormulario();
-            carregarQuestoes();
+            carregarCargos();
 
         } else if (operacao !== 'excluir') {
             const error = await response.json();
-            mostrarMensagem(error.error || 'Erro ao incluir questao', 'error');
+            mostrarMensagem(error.error || 'Erro ao incluir cargo', 'error');
         } else {
-            mostrarMensagem('Questao excluída com sucesso!', 'success');
+            mostrarMensagem('Cargo excluída com sucesso!', 'success');
             limparFormulario();
-            carregarQuestoes();
+            carregarCargos();
         }
     } catch (error) {
         console.error('Erro:', error);
-        mostrarMensagem('Erro ao incluir ou alterar a questao', 'error');
+        mostrarMensagem('Erro ao incluir ou alterar a cargo', 'error');
     }
 
     mostrarBotoes(true, false, false, false, false, false);// mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)
@@ -232,46 +227,44 @@ function cancelarOperacao() {
     mostrarMensagem('Operação cancelada', 'info');
 }
 
-// Função para carregar lista de questoes
-async function carregarQuestoes() {
+// Função para carregar lista de cargos
+async function carregarCargos() {
     try {
-        const response = await fetch(`${API_BASE_URL}/questoes`);
+        const response = await fetch(`${API_BASE_URL}/cargos`);
     //    debugger
         if (response.ok) {
-            const questoes = await response.json();
-            renderizarTabelaQuestoes(questoes);
+            const cargos = await response.json();
+            renderizarTabelaCargos(cargos);
         } else {
-            throw new Error('Erro ao carregar questoes');
+            throw new Error('Erro ao carregar cargos');
         }
     } catch (error) {
         console.error('Erro:', error);
-        mostrarMensagem('Erro ao carregar lista de questoes', 'error');
+        mostrarMensagem('Erro ao carregar lista de cargos', 'error');
     }
 }
 
-// Função para renderizar tabela de questoes
-function renderizarTabelaQuestoes(questoes) {
-    questoesTableBody.innerHTML = '';
+// Função para renderizar tabela de cargos
+function renderizarTabelaCargos(cargos) {
+    cargosTableBody.innerHTML = '';
 
-    questoes.forEach(questao => {
+    cargos.forEach(cargo => {
         const row = document.createElement('tr');
         row.innerHTML = `
                     <td>
-                        <button class="btn-id" onclick="selecionarQuestao(${questao.id_questao})">
-                            ${questao.id_questao}
+                        <button class="btn-id" onclick="selecionarCargo(${cargo.id_cargo})">
+                            ${cargo.id_cargo}
                         </button>
                     </td>
-                    <td>${questao.texto_questao}</td>
-                    <td>${questao.nota_maxima_questao}</td>
-                    <td>${questao.texto_complementar_questao}</td>
+                    <td>${cargo.nome_cargo}</td>
                                  
                 `;
-        questoesTableBody.appendChild(row);
+        cargosTableBody.appendChild(row);
     });
 }
 
-// Função para selecionar questao da tabela
-async function selecionarQuestao(id) {
+// Função para selecionar cargo da tabela
+async function selecionarCargo(id) {
     searchId.value = id;
-    await buscarQuestao();
+    await buscarCargo();
 }

@@ -73,8 +73,8 @@ app.use((err, req, res, next) => {
 //const loginRoutes = require('./routes/loginRoutes');
 //app.use('/login', loginRoutes);
 
-//const menuRoutes = require('./routes/menuRoutes');
-//app.use('/menu', menuRoutes);
+const menuRoutes = require('./routes/menuRoutes');
+app.use('/menu', menuRoutes);
 
 //const pessoaRoutes = require('./routes/pessoaRoutes');
 //app.use('/pessoa', pessoaRoutes);
@@ -99,7 +99,7 @@ app.use((err, req, res, next) => {
 //app.use('/avaliacaoHasQuestao', avaliacaoHasQuestaoRoutes);
 
 const cargoRoutes = require('./routes/cargoRoutes');
-app.use('/cargo', cargoRoutes);
+app.use('/cargos', cargoRoutes);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -156,14 +156,13 @@ app.use((err, req, res, next) => {
 });
 
 // Middleware para rotas não encontradas (404)
-app.use('*', (req, res) => {
+app.use((req, res) => {
   res.status(404).json({
     error: 'Rota não encontrada',
     message: `A rota ${req.originalUrl} não existe`,
     timestamp: new Date().toISOString()
   });
 });
-
 
 
 // Inicialização do servidor
