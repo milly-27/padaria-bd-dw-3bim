@@ -23,7 +23,7 @@ exports.listarPessoas = async (req, res) => {
 exports.criarPessoa = async (req, res) => {
   //  console.log('Criando pessoa com dados:', req.body);
   try {
-    const { id_pessoa, nome_pessoa, email_pessoa, senha_pessoa, primeiro_acesso_pessoa = true, data_nascimento } = req.body;
+    const { id_pessoa, nome_pessoa, email_pessoa, senha_pessoa, apelido_pessoa } = req.body;
 
     // Validação básica
     if (!nome_pessoa || !email_pessoa || !senha_pessoa) {
@@ -41,8 +41,8 @@ exports.criarPessoa = async (req, res) => {
     }
 
     const result = await query(
-      'INSERT INTO pessoa (id_pessoa, nome_pessoa, email_pessoa, senha_pessoa, primeiro_acesso_pessoa, data_nascimento) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [id_pessoa, nome_pessoa, email_pessoa, senha_pessoa, primeiro_acesso_pessoa, data_nascimento]
+      'INSERT INTO pessoa (id_pessoa, nome_pessoa, email_pessoa, senha_pessoa, apelido_pessoa) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [id_pessoa, nome_pessoa, email_pessoa, senha_pessoa, apelido_pessoa]
     );
 
     res.status(201).json(result.rows[0]);
@@ -94,7 +94,7 @@ exports.obterPessoa = async (req, res) => {
 exports.atualizarPessoa = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const { nome_pessoa, email_pessoa, senha_pessoa, primeiro_acesso_pessoa, data_nascimento } = req.body;
+    const { nome_pessoa, email_pessoa, senha_pessoa, apelido_pessoa } = req.body;
 
     // Validação de email se fornecido
     if (email_pessoa) {
@@ -121,14 +121,13 @@ exports.atualizarPessoa = async (req, res) => {
       nome_pessoa: nome_pessoa !== undefined ? nome_pessoa : currentPerson.nome_pessoa,
       email_pessoa: email_pessoa !== undefined ? email_pessoa : currentPerson.email_pessoa,
       senha_pessoa: senha_pessoa !== undefined ? senha_pessoa : currentPerson.senha_pessoa,
-      primeiro_acesso_pessoa: primeiro_acesso_pessoa !== undefined ? primeiro_acesso_pessoa : currentPerson.primeiro_acesso_pessoa,
-      data_nascimento: data_nascimento !== undefined ? data_nascimento : currentPerson.data_nascimento
+      apelido_pessoa: apelido_pessoa !== undefined ? apelido_pessoa : currentPerson.apelido_pessoa
     };
 
     // Atualiza a pessoa
     const updateResult = await query(
-      'UPDATE pessoa SET nome_pessoa = $1, email_pessoa = $2, senha_pessoa = $3, primeiro_acesso_pessoa = $4, data_nascimento = $5 WHERE id_pessoa = $6 RETURNING *',
-      [updatedFields.nome_pessoa, updatedFields.email_pessoa, updatedFields.senha_pessoa, updatedFields.primeiro_acesso_pessoa, updatedFields.data_nascimento, id]
+      'UPDATE pessoa SET nome_pessoa = $1, email_pessoa = $2, senha_pessoa = $3, apelido_pessoa = $4 WHERE id_pessoa = $5 RETURNING *',
+      [updatedFields.nome_pessoa, updatedFields.email_pessoa, updatedFields.senha_pessoa, updatedFields.apelido_pessoa, id]
     );
 
     res.json(updateResult.rows[0]);
@@ -240,7 +239,7 @@ exports.atualizarSenha = async (req, res) => {
 
     // Atualiza apenas a senha
     const updateResult = await query(
-      'UPDATE pessoa SET senha_pessoa = $1 WHERE id_pessoa = $2 RETURNING id_pessoa, nome_pessoa, email_pessoa, primeiro_acesso_pessoa, data_nascimento',
+      'UPDATE pessoa SET senha_pessoa = $1 WHERE id_pessoa = $2 RETURNING id_pessoa, nome_pessoa, email_pessoa, apelido_pessoa',
       [nova_senha, id]
     );
 

@@ -88,7 +88,7 @@ function converterDataParaISO(dataString) {
 
 async function funcaoEhFuncionario(pessoaId) {
     try {
-        const response = await fetch(`${API_BASE_URL}/professor/${pessoaId}`);
+        const response = await fetch(`${API_BASE_URL}/funcionario/${pessoaId}`);
 
         if (response.status === 404) {
             return { ehFuncionario: false };
@@ -152,7 +152,7 @@ async function buscarPessoa() {
         mostrarMensagem('Erro ao buscar pessoa', 'error');
     }
 
-    // Verifica se a pessoa é professor
+    // Verifica se a pessoa é funcionario
     const oFuncionario = await funcaoEhFuncionario(id);
 
     if (oFuncionario.ehFuncionario) {
@@ -271,10 +271,10 @@ async function salvarOperacao() {
             responsePessoa = responseFuncionario;
 
             if (document.getElementById('checkboxFuncionario').checked) {
-                //   console.log('Vai alterar professor: ' + JSON.stringify(professor));
+                //   console.log('Vai alterar funcionario: ' + JSON.stringify(funcionario));
                 const caminhoRota = `${API_BASE_URL}/funcionario/${currentPersonId}`;
-                //console.log('Caminho da rota para professor: ' + caminhoRota);
-                //obter o professor para ver se existe
+                //console.log('Caminho da rota para funcionario: ' + caminhoRota);
+                //obter o funcionario para ver se existe
                 const respObterFuncionario = await fetch(caminhoRota);
                 if (respObterFuncionario.status === 404) {
                     //não existe, incluir       
@@ -296,10 +296,10 @@ async function salvarOperacao() {
                     });
                 }
             } else {
-                //se DEIXOU de ser professor, excluir da tabela professor
+                //se DEIXOU de ser funcionario, excluir da tabela funcionario
                 const caminhoRota = `${API_BASE_URL}/funcionario/${currentPersonId}`;
                 const respObterFuncionario = await fetch(caminhoRota);
-                //    console.log('Resposta ao obter professor para exclusão: ' + respObterProfessor.status);
+                //    console.log('Resposta ao obter funcionario para exclusão: ' + respObterFuncionario.status);
                 if (respObterFuncionario.status === 200) {
                     //existe, pode excluir
                     responseFuncionario = await fetch(caminhoRota, {
@@ -309,7 +309,7 @@ async function salvarOperacao() {
             }
 
             //verificar se é funcionario, se for, excluir da tabela funcionario primeiro
-            const caminhoRota = `${API_BASE_URL}/professor/${currentPersonId}`;
+            const caminhoRota = `${API_BASE_URL}/funcionario/${currentPersonId}`;
             const respObterFuncionario = await fetch(caminhoRota);
             //    console.log('Resposta ao obter funcionario para exclusão: ' + respObterFuncionario.status);
             if (respObterFuncionario.status === 200) {
@@ -400,4 +400,33 @@ function renderizarTabelaPessoas(pessoas) {
 async function selecionarPessoa(id) {
     searchId.value = id;
     await buscarPessoa();
+}
+// Preencher o select de cargos
+try {
+    const response = await fetch(`${API_BASE_URL}/cargo`); // sua rota de cargos
+    if (!response.ok) throw new Error('Erro ao buscar cargos');
+    const cargos = await response.json();
+
+    const selectCargo = document.getElementById('cargo_pessoa_id_pessoa');
+    selectCargo.innerHTML = ''; // limpa antes de preencher
+
+    // cria opção vazia
+    const optionVazia = document.createElement('option');
+    optionVazia.value = '';
+    optionVazia.textContent = 'Selecione um cargo';
+    selectCargo.appendChild(optionVazia);
+
+    // popula com dados vindos da API
+    cargos.forEach(cargo => {
+        const option = document.createElement('option');
+        option.value = cargo.id;       // id do cargo
+        option.textContent = cargo.nome; // nome do cargo
+        if (avaliacao.cargo_pessoa_id_pessoa === cargo.id) {
+            option.selected = true; // marca o cargo da avaliação, se houver
+        }
+        selectCargo.appendChild(option);
+    });
+
+} catch (error) {
+    console.error('Erro ao carregar cargos:', error);
 }
