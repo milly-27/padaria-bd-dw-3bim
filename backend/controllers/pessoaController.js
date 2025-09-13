@@ -11,7 +11,7 @@ exports.abrirCrudPessoa = (req, res) => {
 
 exports.listarPessoas = async (req, res) => {
   try {
-    const result = await query('SELECT * FROM pessoa ORDER BY id_pessoa');
+    const result = await query('SELECT * FROM pessoa ORDER BY cpf');
     // console.log('Resultado do SELECT:', result.rows);//verifica se está retornando algo
     res.json(result.rows);
   } catch (error) {
@@ -23,7 +23,7 @@ exports.listarPessoas = async (req, res) => {
 exports.criarPessoa = async (req, res) => {
   //  console.log('Criando pessoa com dados:', req.body);
   try {
-    const { id_pessoa, nome_pessoa, email_pessoa, senha_pessoa, apelido_pessoa } = req.body;
+    const { cpf, nome_pessoa, email_pessoa, senha_pessoa } = req.body;
 
     // Validação básica
     if (!nome_pessoa || !email_pessoa || !senha_pessoa) {
@@ -41,8 +41,8 @@ exports.criarPessoa = async (req, res) => {
     }
 
     const result = await query(
-      'INSERT INTO pessoa (id_pessoa, nome_pessoa, email_pessoa, senha_pessoa, apelido_pessoa) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [id_pessoa, nome_pessoa, email_pessoa, senha_pessoa, apelido_pessoa]
+      'INSERT INTO pessoa (cpf, nome_pessoa, email_pessoa, senha_pessoa, ) VALUES ($1, $2, $3, $4) RETURNING *',
+      [cpf, nome_pessoa, email_pessoa, senha_pessoa]
     );
 
     res.status(201).json(result.rows[0]);
@@ -76,7 +76,7 @@ exports.obterPessoa = async (req, res) => {
     }
 
     const result = await query(
-      'SELECT * FROM pessoa WHERE id_pessoa = $1',
+      'SELECT * FROM pessoa WHERE cpf = $1',
       [id]
     );
 
@@ -94,7 +94,7 @@ exports.obterPessoa = async (req, res) => {
 exports.atualizarPessoa = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const { nome_pessoa, email_pessoa, senha_pessoa, apelido_pessoa } = req.body;
+    const { nome_pessoa, email_pessoa, senha_pessoa } = req.body;
 
     // Validação de email se fornecido
     if (email_pessoa) {
@@ -107,7 +107,7 @@ exports.atualizarPessoa = async (req, res) => {
     }
     // Verifica se a pessoa existe
     const existingPersonResult = await query(
-      'SELECT * FROM pessoa WHERE id_pessoa = $1',
+      'SELECT * FROM pessoa WHERE cpf = $1',
       [id]
     );
 
@@ -121,13 +121,12 @@ exports.atualizarPessoa = async (req, res) => {
       nome_pessoa: nome_pessoa !== undefined ? nome_pessoa : currentPerson.nome_pessoa,
       email_pessoa: email_pessoa !== undefined ? email_pessoa : currentPerson.email_pessoa,
       senha_pessoa: senha_pessoa !== undefined ? senha_pessoa : currentPerson.senha_pessoa,
-      apelido_pessoa: apelido_pessoa !== undefined ? apelido_pessoa : currentPerson.apelido_pessoa
     };
 
     // Atualiza a pessoa
     const updateResult = await query(
-      'UPDATE pessoa SET nome_pessoa = $1, email_pessoa = $2, senha_pessoa = $3, apelido_pessoa = $4 WHERE id_pessoa = $5 RETURNING *',
-      [updatedFields.nome_pessoa, updatedFields.email_pessoa, updatedFields.senha_pessoa, updatedFields.apelido_pessoa, id]
+      'UPDATE pessoa SET nome_pessoa = $1, email_pessoa = $2, senha_pessoa = $3 WHERE cpf = $4 RETURNING *',
+      [updatedFields.nome_pessoa, updatedFields.email_pessoa, updatedFields.senha_pessoa, id]
     );
 
     res.json(updateResult.rows[0]);
@@ -150,7 +149,7 @@ exports.deletarPessoa = async (req, res) => {
     const id = parseInt(req.params.id);
     // Verifica se a pessoa existe
     const existingPersonResult = await query(
-      'SELECT * FROM pessoa WHERE id_pessoa = $1',
+      'SELECT * FROM pessoa WHERE cpf = $1',
       [id]
     );
 
@@ -160,7 +159,7 @@ exports.deletarPessoa = async (req, res) => {
 
     // Deleta a pessoa (as constraints CASCADE cuidarão das dependências)
     await query(
-      'DELETE FROM pessoa WHERE id_pessoa = $1',
+      'DELETE FROM pessoa WHERE cpf = $1',
       [id]
     );
 
@@ -222,7 +221,7 @@ exports.atualizarSenha = async (req, res) => {
 
     // Verifica se a pessoa existe e a senha atual está correta
     const personResult = await query(
-      'SELECT * FROM pessoa WHERE id_pessoa = $1',
+      'SELECT * FROM pessoa WHERE cpf = $1',
       [id]
     );
 
@@ -239,7 +238,7 @@ exports.atualizarSenha = async (req, res) => {
 
     // Atualiza apenas a senha
     const updateResult = await query(
-      'UPDATE pessoa SET senha_pessoa = $1 WHERE id_pessoa = $2 RETURNING id_pessoa, nome_pessoa, email_pessoa, apelido_pessoa',
+      'UPDATE pessoa SET senha_pessoa = $1 WHERE cpf = $2 RETURNING cpf, nome_pessoa, email_pessoa',
       [nova_senha, id]
     );
 

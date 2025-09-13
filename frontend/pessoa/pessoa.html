@@ -19,7 +19,7 @@
 
             <form id="pessoaForm">
                 <div class="search-container">
-                    <label for="searchId">Buscar por ID:</label>
+                    <label for="searchId">Buscar por CPF:</label>
                     <div class="search-input-group">
                         <input type="number" id="searchId" placeholder="Digite o ID para buscar">
                         <button type="button" id="btnBuscar">🔍 Buscar</button>
@@ -50,11 +50,6 @@
                         <label for="senha_pessoa">Senha:</label>
                         <input type="password" id="senha_pessoa" name="senha_pessoa" required>
                     </div>
-
-                    <div class="form-group">
-                        <label for="apelido_pessoa">Apelido:</label>
-                        <input type="text" id="apelido_pessoa" name="apelido_pessoa" required>
-                      </div>
                       
                 </fieldset>
             </form>
@@ -82,11 +77,10 @@
                 <table id="pessoasTable">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>CPF</th>
                             <th>Nome</th>
                             <th>Email</th>
                             <th>Senha</th>
-                            <th>Apelido</th>
                         </tr>
                     </thead>
                     <tbody id="pessoasTableBody">
