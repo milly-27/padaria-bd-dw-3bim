@@ -21,6 +21,39 @@ document.addEventListener('DOMContentLoaded', () => {
     carregarPessoas();
 });
 
+// =========================
+// CARREGAR CARGOS NO SELECT
+// =========================
+async function carregarCargos() {
+    try {
+        const response = await fetch('http://localhost:3001/cargos'); // rota do cargo
+        if (!response.ok) {
+            throw new Error('Erro ao buscar cargos');
+        }
+
+        const cargos = await response.json();
+        const selectCargo = document.getElementById('cargo_pessoa_cpf');
+
+        // Limpa as opções antes de carregar
+        selectCargo.innerHTML = '<option value="">Selecione um cargo</option>';
+
+        // Adiciona os cargos vindos do banco
+        cargos.forEach(cargo => {
+            const option = document.createElement('option');
+            option.value = cargo.id_cargo;
+            option.textContent = cargo.nome_cargo;
+            selectCargo.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error('Erro ao carregar cargos:', error);
+    }
+}
+
+// Quando a tela carregar, já popula o select de cargos
+document.addEventListener('DOMContentLoaded', carregarCargos);
+
+
 // Event Listeners
 btnBuscar.addEventListener('click', buscarPessoa);
 btnIncluir.addEventListener('click', incluirPessoa);
