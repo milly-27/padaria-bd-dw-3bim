@@ -76,8 +76,8 @@ app.use((err, req, res, next) => {
 const menuRoutes = require('./routes/menuRoutes');
 app.use('/menu', menuRoutes);
 
-const pessoaRoutes = require('./routes/pessoaRoutes');
-app.use('/pessoas', pessoaRoutes);
+//const pessoaRoutes = require('./routes/pessoaRoutes');
+//app.use('/pessoas', pessoaRoutes);
 
 //const questaoRoutes = require('./routes/questaoRoutes');
 //app.use('/questao', questaoRoutes);
@@ -103,6 +103,12 @@ app.use('/cargos', cargoRoutes);
 
 const categoriaRoutes = require('./routes/categoriaRoutes');
 app.use('/categorias', categoriaRoutes);
+
+const pessoaRoutes = require('./routes/pessoaRoutes');
+app.use('/pessoas', pessoaRoutes);
+
+const produtoRoutes = require('./routes/produtoRoutes');
+app.use('/produtos', produtoRoutes);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Rota padrão

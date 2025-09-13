@@ -97,7 +97,7 @@ async function funcaoEhFuncionario(pessoaId) {
         if (response.status === 200) {
             const funcionarioData = await response.json();
             return {
-                ehFuncionario: true, // CORREÇÃO: era "pessoa_id_pessoa: true"
+                ehFuncionario: true, // CORREÇÃO: era "pessoa_cpf: true"
                 salario_funcionario: funcionarioData.salario_funcionario_funcionario // CORREÇÃO: usar o nome correto do campo
             };
         }
@@ -193,8 +193,8 @@ async function buscarPessoa() {
 
 // Função para preencher formulário com dados da pessoa
 function preencherFormulario(pessoa) {
-    currentPersonId = pessoa.id_pessoa;
-    searchId.value = pessoa.id_pessoa;
+    currentPersonId = pessoa.cpf;
+    searchId.value = pessoa.cpf;
     document.getElementById('nome_pessoa').value = pessoa.nome_pessoa || '';
     document.getElementById('email_pessoa').value = pessoa.email_pessoa || '';
     document.getElementById('senha_pessoa').value = pessoa.senha_pessoa || '';
@@ -244,7 +244,7 @@ async function salvarOperacao() {
 
     const formData = new FormData(form);
     const pessoa = {
-        id_pessoa: searchId.value,
+        cpf: searchId.value,
         nome_pessoa: formData.get('nome_pessoa'),
         email_pessoa: formData.get('email_pessoa'),
         senha_pessoa: formData.get('senha_pessoa'),
@@ -255,7 +255,7 @@ async function salvarOperacao() {
     let funcionario = null;
     if (document.getElementById('checkboxFuncionario').checked) {
         funcionario = {
-            pessoa_id_pessoa: pessoa.id_pessoa,
+            pessoa_cpf: pessoa.cpf,
             mnemonico_funcionario: document.getElementById('mnemonicoFuncionario').value,
             departamento_funcionario: document.getElementById('departamentoFuncionario').value
         }
@@ -291,7 +291,7 @@ async function salvarOperacao() {
             let responseCliente = null;
             if (ehCliente) {
                 const cliente = {
-                    pessoa_id_pessoa: pessoa.id_pessoa
+                    pessoa_cpf: pessoa.cpf
                 };
                 responseCliente = await fetch(`${API_BASE_URL}/cliente`, {
                     method: 'POST',
@@ -305,7 +305,7 @@ async function salvarOperacao() {
             let responseFuncionario = null;
             if (ehFuncionario) {
                 const funcionario = {
-                    pessoa_id_pessoa: pessoa.id_pessoa
+                    pessoa_cpf: pessoa.cpf
                 };
                 responseFuncionario = await fetch(`${API_BASE_URL}/funcionario`, {
                     method: 'POST',
@@ -336,7 +336,7 @@ async function salvarOperacao() {
                 if (respObterCliente.status === 404) {
                     //incluir cliente
                     cliente = {
-                        pessoa_id_pessoa: pessoa.id_pessoa
+                        pessoa_cpf: pessoa.cpf
                     }
                 };
                 
@@ -370,7 +370,7 @@ async function salvarOperacao() {
                 if (respObterFuncionario.status === 404) {
                     //incluir funcionario
                     funcionario = {
-                        pessoa_id_pessoa: pessoa.id_pessoa
+                        pessoa_cpf: pessoa.cpf
                     }
                 };
                 respObterFuncionario = await fetch(`${API_BASE_URL}/funcionario`, {
@@ -458,15 +458,15 @@ async function salvarOperacao() {
 
 
             //verificar se é funcionario, se for, excluir da tabela funcionario primeiro
-            const caminhoRota = `${API_BASE_URL}/funcionario/${currentPersonId}`;
-            const respObterFuncionario = await fetch(caminhoRota);
+           //onst caminhoRota = `${API_BASE_URL}/funcionario/${currentPersonId}`;
+           //onst respObterFuncionario = await fetch(caminhoRota);
             //    console.log('Resposta ao obter funcionario para exclusão: ' + respObterFuncionario.status);
-            if (respObterFuncionario.status === 200) {
-                //existe, pode excluir
-                responseFuncionario = await fetch(caminhoRota, {
-                    method: 'DELETE'
-                });
-            }
+          //if (respObterFuncionario.status === 200) {
+               //existe, pode excluir
+            //  responseFuncionario = await fetch(caminhoRota, {
+             //     method: 'DELETE'
+             // });
+          //}
             //agora exclui da tabela pessoa
             // console.log('Excluindo pessoa com ID:', currentPersonId);
             responseFuncionario = await fetch(`${API_BASE_URL}/pessoas/${currentPersonId}`, {
@@ -510,6 +510,7 @@ function cancelarOperacao() {
 
 // Função para carregar lista de pessoas
 async function carregarPessoas() {
+    console.log('REQ.BODY:', req.body); // <--- mostra o que chegou do frontend
     try {
         const response = await fetch(`${API_BASE_URL}/pessoas`);
 
@@ -533,8 +534,8 @@ function renderizarTabelaPessoas(pessoas) {
         const row = document.createElement('tr');
         row.innerHTML = `
                     <td>
-                        <button class="btn-id" onclick="selecionarPessoa(${pessoa.id_pessoa})">
-                            ${pessoa.id_pessoa}
+                        <button class="btn-id" onclick="selecionarPessoa(${pessoa.cpf})">
+                            ${pessoa.cpf}
                         </button>
                     </td>
                     <td>${pessoa.nome_pessoa}</td>
