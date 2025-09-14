@@ -9,8 +9,8 @@ router.post('/', funcionarioController.criarFuncionario);
 router.put('/:cpf', funcionarioController.atualizarFuncionario);
 router.delete('/:cpf', funcionarioController.excluirFuncionario);
 
-// ===================== CARGO =====================
-router.get('/cargos/listar', funcionarioController.listarCargos);
-router.post('/cargos', funcionarioController.criarCargo);
+// ===================== FUNCIONARIO =====================
+router.get('/funcionarios/listar', funcionarioController.listarFuncionarios);
+router.post('/funcionarios', funcionarioController.criarFuncionario);
 
 module.exports = router;

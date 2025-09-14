@@ -211,61 +211,126 @@ async function salvarOperacao() {
     console.log('Operação:', operacao + ' - currentPersonId: ' + currentPersonId + ' - searchId: ' + searchId.value);
 
     const formData = new FormData(form);
+    const cpf = searchId.value.trim();
+
     const pessoa = {
-        cpf: searchId.value,
-        nome_pessoa: formData.get('nome_pessoa'),
-        email_pessoa: Number(formData.get('email_pessoa')),
-        senha_pessoa: Number(formData.get('senha_pessoa'))
+        cpf: cpf,
+        nome_pessoa: formData.get('nome_pessoa') || '',
+        email_pessoa: formData.get('email_pessoa') || '',
+        senha_pessoa: formData.get('senha_pessoa') || ''
     };
-    
-    let response = null;
+
+    // lê diretamente do DOM (funciona mesmo se os campos estiverem fora do form)
+    const isFuncionario = document.getElementById('checkboxFuncionario').checked;
+    const salarioFuncionario = parseFloat(document.getElementById('salarioFuncionario').value);
+    const idCargo = parseInt(document.getElementById('cargo_pessoa_cpf').value);
+
     try {
+        let response = null;
+
         if (operacao === 'incluir') {
             response = await fetch(`${API_BASE_URL}/pessoas`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(pessoa)
             });
         } else if (operacao === 'alterar') {
             response = await fetch(`${API_BASE_URL}/pessoas/${currentPersonId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(pessoa)
             });
         } else if (operacao === 'excluir') {
-            // console.log('Excluindo pessoa com ID:', currentPersonId);
             response = await fetch(`${API_BASE_URL}/pessoas/${currentPersonId}`, {
                 method: 'DELETE'
             });
-            console.log('Pessoa excluído' + response.status);
         }
-        if (response.ok && (operacao === 'incluir' || operacao === 'alterar')) {
-            const novaPessoa = await response.json();
+
+        // TRATAMENTO GERAL: incluir/alterar
+        if ((operacao === 'incluir' || operacao === 'alterar')) {
+            if (!response.ok) {
+                // tenta extrair erro do back, senão mostra mensagem genérica
+                const err = await response.json().catch(() => ({}));
+                mostrarMensagem(err.error || 'Erro ao salvar pessoa', 'error');
+                return;
+            }
+
+            const novaPessoa = await response.json(); // normalmente o backend retorna a pessoa criada/atualizada
             mostrarMensagem('Operação ' + operacao + ' realizada com sucesso!', 'success');
+
+            // Se é funcionário, salva/atualiza a tabela funcionario
+            if (isFuncionario) {
+                // validações
+                if (!idCargo || isNaN(idCargo) || isNaN(salarioFuncionario) || salarioFuncionario <= 0) {
+                    mostrarMensagem('Selecione um cargo e informe o salário válido!', 'error');
+                    return;
+                }
+
+                const funcionario = {
+                    cpf: cpf,          // campo esperado pelo controller: cpf
+                    id_cargo: idCargo,
+                    salario: salarioFuncionario
+                };
+
+                try {
+                    if (operacao === 'incluir') {
+                        const respFunc = await fetch(`${API_BASE_URL}/funcionarios`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(funcionario)
+                        });
+
+                        if (!respFunc.ok) {
+                            const err = await respFunc.json().catch(() => ({}));
+                            mostrarMensagem(err.error || 'Erro ao salvar funcionário', 'error');
+                        } else {
+                            mostrarMensagem('Funcionário salvo com sucesso!', 'success');
+                        }
+                    } else if (operacao === 'alterar') {
+                        // supondo que você tenha rota PUT /funcionarios/:cpf para atualizar funcionário
+                        const respFunc = await fetch(`${API_BASE_URL}/funcionarios/${cpf}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(funcionario)
+                        });
+
+                        if (!respFunc.ok) {
+                            const err = await respFunc.json().catch(() => ({}));
+                            mostrarMensagem(err.error || 'Erro ao atualizar funcionário', 'error');
+                        } else {
+                            mostrarMensagem('Dados de funcionário atualizados', 'success');
+                        }
+                    }
+                } catch (err) {
+                    console.error('Erro ao salvar/atualizar funcionário:', err);
+                    mostrarMensagem('Erro ao salvar dados de funcionário', 'error');
+                }
+            }
+
+            // limpa e recarrega
             limparFormulario();
             carregarPessoas();
 
-        } else if (operacao !== 'excluir') {
-            const error = await response.json();
-            mostrarMensagem(error.error || 'Erro ao incluir pessoa', 'error');
-        } else {
-            mostrarMensagem('Pessoa excluída com sucesso!', 'success');
-            limparFormulario();
-            carregarPessoas();
+        } else if (operacao === 'excluir') {
+            if (response.ok) {
+                mostrarMensagem('Pessoa excluída com sucesso!', 'success');
+                limparFormulario();
+                carregarPessoas();
+            } else {
+                mostrarMensagem('Erro ao excluir pessoa', 'error');
+            }
         }
+
     } catch (error) {
         console.error('Erro:', error);
         mostrarMensagem('Erro ao incluir ou alterar a pessoa', 'error');
+    } finally {
+        mostrarBotoes(true, false, false, false, false, false);
+        bloquearCampos(false);
+        document.getElementById('searchId').focus();
     }
-
-    mostrarBotoes(true, false, false, false, false, false);// mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)
-    bloquearCampos(false);//libera pk e bloqueia os demais campos
-    document.getElementById('searchId').focus();
 }
+
 
 // Função para cancelar operação
 function cancelarOperacao() {

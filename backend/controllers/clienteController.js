@@ -1,45 +1,72 @@
-const db = require('../database.js');
+//import { query } from '../database.js';
+const { query } = require('../database');
+// Funções do controller
 
-// ==========================================================
-// CLIENTE CONTROLLER
-// ==========================================================
+const path = require('path');
 
-// Listar todos os clientes
+exports.abrirCrudCliente = (req, res) => {
+  console.log('clienteController - Rota /abrirCrudCliente - abrir o crudCliente');
+  res.sendFile(path.join(__dirname, '../../frontend/cliente/cliente.html'));
+}
+
 exports.listarClientes = async (req, res) => {
   try {
-    const sql = `
-      SELECT c.cpf, p.nome_pessoa, p.email_pessoa, p.senha_pessoa
-      FROM cliente c
-      JOIN pessoa p ON c.cpf = p.cpf
-      ORDER BY p.nome_pessoa
-    `;
-    const result = await db.query(sql);
+    const result = await query('SELECT * FROM cliente ORDER BY cpf');
+    // console.log('Resultado do SELECT:', result.rows);//verifica se está retornando algo
     res.json(result.rows);
   } catch (error) {
     console.error('Erro ao listar clientes:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
-};
+}
 
-// Obter cliente por CPF
-exports.obterCliente = async (req, res) => {
+exports.criarCliente = async (req, res) => {
+  //  console.log('Criando cliente com dados:', req.body);
   try {
-    const { cpf } = req.params;
+    const { cpf, nome_cliente} = req.body;
 
-    if (!cpf) {
-      return res.status(400).json({ error: 'CPF é obrigatório' });
+    // Validação básica
+    if (!nome_cliente) {
+      return res.status(400).json({
+        error: 'Nome do cliente é obrigatório'
+      });
     }
 
-    const sql = `
-      SELECT c.cpf, p.nome_pessoa, p.email_pessoa, p.senha_pessoa
-      FROM cliente c
-      JOIN pessoa p ON c.cpf = p.cpf
-      WHERE c.cpf = $1
-    `;
-    const result = await db.query(sql, [cpf]);
+    const result = await query(
+      'INSERT INTO cliente (cpf) VALUES ($1) RETURNING *',
+      [cpf, nome_cliente]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Erro ao criar cliente:', error);
+
+    // Verifica se é erro de violação de constraint NOT NULL
+    if (error.code === '23502') {
+      return res.status(400).json({
+        error: 'Dados obrigatórios não fornecidos'
+      });
+    }
+
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+}
+
+exports.obterCliente = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'ID deve ser um número válido' });
+    }
+
+    const result = await query(
+      'SELECT * FROM cliente WHERE cpf = $1',
+      [id]
+    );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Cliente não encontrado' });
+      return res.status(404).json({ error: 'Cliente não encontrada' });
     }
 
     res.json(result.rows[0]);
@@ -47,92 +74,72 @@ exports.obterCliente = async (req, res) => {
     console.error('Erro ao obter cliente:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
-};
+}
 
-// Criar cliente (associar CPF já existente em pessoa)
-exports.criarCliente = async (req, res) => {
-  try {
-    const { cpf } = req.body;
-
-    if (!cpf) {
-      return res.status(400).json({ error: 'CPF é obrigatório' });
-    }
-
-    const sql = `
-      INSERT INTO cliente (cpf)
-      VALUES ($1)
-      RETURNING *
-    `;
-    const result = await db.query(sql, [cpf]);
-
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error('Erro ao criar cliente:', error);
-
-    if (error.code === '23505') {
-      return res.status(400).json({ error: 'CPF já está registrado como cliente' });
-    }
-
-    if (error.code === '23503') {
-      return res.status(400).json({ error: 'CPF não existe na tabela pessoa' });
-    }
-
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-};
-
-// Atualizar cliente (nesse caso não tem muito campo além do CPF)
 exports.atualizarCliente = async (req, res) => {
   try {
-    const { cpf } = req.params;
-    const { novoCpf } = req.body;
+    const id = parseInt(req.params.id);
 
-    if (!cpf || !novoCpf) {
-      return res.status(400).json({ error: 'CPF atual e novo CPF são obrigatórios' });
-    }
+   
+    // Verifica se a cliente existe
+    const existingPersonResult = await query(
+      'SELECT * FROM cliente WHERE cpf = $1',
+      [id]
+    );
 
-    const sql = `
-      UPDATE cliente
-      SET cpf = $1
-      WHERE cpf = $2
-      RETURNING *
-    `;
-    const result = await db.query(sql, [novoCpf, cpf]);
-
-    if (result.rows.length === 0) {
+    if (existingPersonResult.rows.length === 0) {
       return res.status(404).json({ error: 'Cliente não encontrado' });
     }
 
-    res.json(result.rows[0]);
+    // Constrói a query de atualização dinamicamente para campos não nulos
+    const currentPerson = existingPersonResult.rows[0];
+    const updatedFields = {
+    };
+
+    // Atualiza a cliente
+    const updateResult = await query(
+      'UPDATE cliente SET  WHERE cpf = $1 RETURNING *',
+      [updatedFields.nome_cliente, id]
+    );
+
+    res.json(updateResult.rows[0]);
   } catch (error) {
     console.error('Erro ao atualizar cliente:', error);
+
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
-};
+}
 
-// Excluir cliente
-exports.excluirCliente = async (req, res) => {
+exports.deletarCliente = async (req, res) => {
   try {
-    const { cpf } = req.params;
+    const id = parseInt(req.params.id);
+    // Verifica se a cliente existe
+    const existingPersonResult = await query(
+      'SELECT * FROM cliente WHERE cpf = $1',
+      [id]
+    );
 
-    if (!cpf) {
-      return res.status(400).json({ error: 'CPF é obrigatório' });
+    if (existingPersonResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Cliente não encontrada' });
     }
 
-    const sql = `
-      DELETE FROM cliente
-      WHERE cpf = $1
-      RETURNING *
-    `;
-    const result = await db.query(sql, [cpf]);
+    // Deleta a cliente (as constraints CASCADE cuidarão das dependências)
+    await query(
+      'DELETE FROM cliente WHERE cpf = $1',
+      [id]
+    );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Cliente não encontrado' });
-    }
-
-    res.json({ message: 'Cliente excluído com sucesso' });
+    res.status(204).send();
   } catch (error) {
-    console.error('Erro ao excluir cliente:', error);
+    console.error('Erro ao deletar cliente:', error);
+
+    // Verifica se é erro de violação de foreign key (dependências)
+    if (error.code === '23503') {
+      return res.status(400).json({
+        error: 'Não é possível deletar cliente com dependências associadas'
+      });
+    }
+
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
-};
+}

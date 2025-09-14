@@ -41,7 +41,7 @@ exports.criarPessoa = async (req, res) => {
     }
 
     const result = await query(
-      'INSERT INTO pessoa (cpf, nome_pessoa, email_pessoa, senha_pessoa, ) VALUES ($1, $2, $3, $4) RETURNING *',
+      'INSERT INTO pessoa (cpf, nome_pessoa, email_pessoa, senha_pessoa ) VALUES ($1, $2, $3, $4) RETURNING *',
       [cpf, nome_pessoa, email_pessoa, senha_pessoa]
     );
 
@@ -69,7 +69,7 @@ exports.criarPessoa = async (req, res) => {
 
 exports.obterPessoa = async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = req.params.id;
 
     if (isNaN(id)) {
       return res.status(400).json({ error: 'ID deve ser um número válido' });
@@ -93,7 +93,7 @@ exports.obterPessoa = async (req, res) => {
 
 exports.atualizarPessoa = async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = req.params.id;
     const { nome_pessoa, email_pessoa, senha_pessoa } = req.body;
 
     // Validação de email se fornecido
@@ -146,7 +146,7 @@ exports.atualizarPessoa = async (req, res) => {
 
 exports.deletarPessoa = async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = req.params.id;
     // Verifica se a pessoa existe
     const existingPersonResult = await query(
       'SELECT * FROM pessoa WHERE cpf = $1',
@@ -206,7 +206,7 @@ exports.obterPessoaPorEmail = async (req, res) => {
 // Função para atualizar apenas a senha
 exports.atualizarSenha = async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = req.params.id;
     const { senha_atual, nova_senha } = req.body;
 
     if (isNaN(id)) {

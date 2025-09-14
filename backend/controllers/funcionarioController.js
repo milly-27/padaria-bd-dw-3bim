@@ -1,145 +1,134 @@
-const db = require('../database.js');
+const { query } = require('../database');
+const path = require('path');
 
-// ===================== FUNCIONÁRIO =====================
+exports.abrirCrudFuncionario = (req, res) => {
+  console.log('funcionarioController - Rota /abrirCrudFuncionario');
+  res.sendFile(path.join(__dirname, '../../frontend/funcionario/funcionario.html'));
+};
 
-// Listar todos os funcionários com o nome do cargo
+// Listar todos os funcionários
 exports.listarFuncionarios = async (req, res) => {
   try {
-    const sql = `
-      SELECT f.cpf, p.nome_pessoa, p.email_pessoa, f.salario, c.id_cargo, c.nome_cargo
-      FROM funcionario f
-      JOIN pessoa p ON f.cpf = p.cpf
-      JOIN cargo c ON f.id_cargo = c.id_cargo
-      ORDER BY p.nome_pessoa
-    `;
-    const result = await db.query(sql);
+    const result = await query('SELECT * FROM funcionario ORDER BY cpf');
     res.json(result.rows);
   } catch (error) {
-    console.error("Erro ao listar funcionários:", error);
-    res.status(500).json({ error: "Erro interno do servidor" });
+    console.error('Erro ao listar funcionarios:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };
 
-// Obter um funcionário pelo CPF
-exports.obterFuncionario = async (req, res) => {
-  try {
-    const { cpf } = req.params;
-    const sql = `
-      SELECT f.cpf, p.nome_pessoa, p.email_pessoa, f.salario, c.id_cargo, c.nome_cargo
-      FROM funcionario f
-      JOIN pessoa p ON f.cpf = p.cpf
-      JOIN cargo c ON f.id_cargo = c.id_cargo
-      WHERE f.cpf = $1
-    `;
-    const result = await db.query(sql, [cpf]);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Funcionário não encontrado" });
-    }
-
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error("Erro ao obter funcionário:", error);
-    res.status(500).json({ error: "Erro interno do servidor" });
-  }
-};
-
-// Criar um novo funcionário
+// Criar funcionário
 exports.criarFuncionario = async (req, res) => {
   try {
     const { cpf, id_cargo, salario } = req.body;
 
     if (!cpf || !id_cargo || !salario) {
-      return res.status(400).json({ error: "CPF, cargo e salário são obrigatórios" });
+      return res.status(400).json({
+        error: 'CPF, cargo e salário são obrigatórios'
+      });
     }
 
-    const sql = `
-      INSERT INTO funcionario (cpf, id_cargo, salario)
-      VALUES ($1, $2, $3)
-      RETURNING *
-    `;
-    const result = await db.query(sql, [cpf, id_cargo, salario]);
+    const result = await query(
+      'INSERT INTO funcionario (cpf, id_cargo, salario) VALUES ($1, $2, $3) RETURNING *',
+      [cpf, id_cargo, salario]
+    );
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error("Erro ao criar funcionário:", error);
-    res.status(500).json({ error: "Erro interno do servidor" });
+    console.error('Erro ao criar funcionario:', error);
+
+    if (error.code === '23502') {
+      return res.status(400).json({
+        error: 'Dados obrigatórios não fornecidos'
+      });
+    }
+
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+};
+
+// Obter funcionário pelo CPF
+exports.obterFuncionario = async (req, res) => {
+  try {
+    const cpf = req.params.cpf;
+
+    const result = await query(
+      'SELECT * FROM funcionario WHERE cpf = $1',
+      [cpf]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Funcionario não encontrado' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Erro ao obter funcionario:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };
 
 // Atualizar funcionário
 exports.atualizarFuncionario = async (req, res) => {
   try {
-    const { cpf } = req.params;
+    const cpf = req.params.cpf;
     const { id_cargo, salario } = req.body;
 
-    const sql = `
-      UPDATE funcionario
-      SET id_cargo = $1, salario = $2
-      WHERE cpf = $3
-      RETURNING *
-    `;
-    const result = await db.query(sql, [id_cargo, salario, cpf]);
+    const existingPersonResult = await query(
+      'SELECT * FROM funcionario WHERE cpf = $1',
+      [cpf]
+    );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Funcionário não encontrado" });
+    if (existingPersonResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Funcionario não encontrado' });
     }
 
-    res.json(result.rows[0]);
+    const currentPerson = existingPersonResult.rows[0];
+
+    const newCargo = id_cargo !== undefined ? id_cargo : currentPerson.id_cargo;
+    const newSalario = salario !== undefined ? salario : currentPerson.salario;
+
+    const updateResult = await query(
+      'UPDATE funcionario SET id_cargo = $1, salario = $2 WHERE cpf = $3 RETURNING *',
+      [newCargo, newSalario, cpf]
+    );
+
+    res.json(updateResult.rows[0]);
   } catch (error) {
-    console.error("Erro ao atualizar funcionário:", error);
-    res.status(500).json({ error: "Erro interno do servidor" });
+    console.error('Erro ao atualizar funcionario:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };
 
-// Excluir funcionário
-exports.excluirFuncionario = async (req, res) => {
+// Deletar funcionário
+exports.deletarFuncionario = async (req, res) => {
   try {
-    const { cpf } = req.params;
+    const cpf = req.params.cpf;
 
-    const sql = `DELETE FROM funcionario WHERE cpf = $1 RETURNING *`;
-    const result = await db.query(sql, [cpf]);
+    const existingPersonResult = await query(
+      'SELECT * FROM funcionario WHERE cpf = $1',
+      [cpf]
+    );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Funcionário não encontrado" });
+    if (existingPersonResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Funcionario não encontrado' });
     }
 
-    res.json({ message: "Funcionário excluído com sucesso" });
+    await query(
+      'DELETE FROM funcionario WHERE cpf = $1',
+      [cpf]
+    );
+
+    res.status(204).send();
   } catch (error) {
-    console.error("Erro ao excluir funcionário:", error);
-    res.status(500).json({ error: "Erro interno do servidor" });
-  }
-};
+    console.error('Erro ao deletar funcionario:', error);
 
-// ===================== CARGO =====================
-
-// Listar cargos
-exports.listarCargos = async (req, res) => {
-  try {
-    const sql = `SELECT * FROM cargo ORDER BY nome_cargo`;
-    const result = await db.query(sql);
-    res.json(result.rows);
-  } catch (error) {
-    console.error("Erro ao listar cargos:", error);
-    res.status(500).json({ error: "Erro interno do servidor" });
-  }
-};
-
-// Criar cargo
-exports.criarCargo = async (req, res) => {
-  try {
-    const { nome_cargo } = req.body;
-
-    if (!nome_cargo) {
-      return res.status(400).json({ error: "Nome do cargo é obrigatório" });
+    if (error.code === '23503') {
+      return res.status(400).json({
+        error: 'Não é possível deletar funcionario com dependências associadas'
+      });
     }
 
-    const sql = `INSERT INTO cargo (nome_cargo) VALUES ($1) RETURNING *`;
-    const result = await db.query(sql, [nome_cargo]);
-
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error("Erro ao criar cargo:", error);
-    res.status(500).json({ error: "Erro interno do servidor" });
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };
