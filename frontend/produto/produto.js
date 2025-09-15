@@ -19,6 +19,7 @@ const messageContainer = document.getElementById('messageContainer');
 // Carregar lista de produtos ao inicializar
 document.addEventListener('DOMContentLoaded', () => {
     carregarProdutos();
+    carregarCategorias();
 });
 
 // Event Listeners
@@ -124,6 +125,7 @@ function preencherFormulario(produto) {
     document.getElementById('nome_produto').value = produto.nome_produto || '';
     document.getElementById('preco').value = produto.preco || '';
     document.getElementById('quantidade_estoque').value = produto.quantidade_estoque || '';
+    document.getElementById('id_categoria').value = produto.id_categoria || '';
   }  
 
 
@@ -182,7 +184,8 @@ async function salvarOperacao() {
         id_produto: searchId.value,
         nome_produto: formData.get('nome_produto'),
         preco: Number(formData.get('preco')),
-        quantidade_estoque: Number(formData.get('quantidade_estoque'))
+        quantidade_estoque: Number(formData.get('quantidade_estoque')),
+        id_categoria: Number(formData.get('id_categoria'))
     };
     
     let response = null;
@@ -259,6 +262,30 @@ async function carregarProdutos() {
         mostrarMensagem('Erro ao carregar lista de produtos', 'error');
     }
 }
+
+async function carregarCategorias() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/categorias`); // sua rota do CRUD categoria
+        if (!response.ok) throw new Error("Erro ao carregar categorias");
+
+        const categorias = await response.json();
+        const selectCategoria = document.getElementById('id_categoria');
+        
+        // limpa opções antes de preencher
+        selectCategoria.innerHTML = '<option value="">Selecione uma categoria</option>';
+
+        categorias.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.id_categoria;
+            option.textContent = cat.nome_categoria; // ou o campo que você tiver
+            selectCategoria.appendChild(option);
+        });
+    } catch (error) {
+        console.error("Erro ao carregar categorias:", error);
+        mostrarMensagem("Erro ao carregar categorias", "error");
+    }
+}
+
 
 // Função para renderizar tabela de produtos
 function renderizarTabelaProdutos(produtos) {
