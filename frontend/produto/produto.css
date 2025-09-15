@@ -7,16 +7,15 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: white;
-    color: #2d4a2d;
+    background-color: #fffdfb;
+    color: #3e2c1c;
     line-height: 1.0;
     min-height: 100vh;
-    
 }
 
 /* Header */
 header {
-    background: linear-gradient(135deg, #2d4a2d, #4a7c59);
+    background: linear-gradient(135deg, #3e2c1c, #6f4e37);
     color: white;
     text-align: center;
     padding: 2rem 0;
@@ -25,14 +24,13 @@ header {
 
 header h1 {
     font-size: 1.5rem;
-    font-weight: 00;
+    font-weight: 500;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Main container */
 main {
     max-width: 1200px;
-   
     margin: 2rem auto;
     padding: 0 2rem;
     display: grid;
@@ -41,39 +39,35 @@ main {
 
 /* Sections */
 section {
-    background: white;
+    background: #fff;
     border-radius: 12px;
     padding: 2rem;
-    box-shadow: 0 4px 15px rgba(45, 74, 45, 0.1);
-    border: 1px solid #e0f2e0;
-    
-    
-    
-    /* background-color: rgb(220, 252, 241); */
+    box-shadow: 0 4px 15px rgba(62, 44, 28, 0.1);
+    border: 1px solid #f1e5d6;
 }
 
 section h2 {
-    color: #2d4a2d;
+    color: #3e2c1c;
     margin-bottom: 1.5rem;
     font-size: 1.8rem;
-    border-bottom: 3px solid aquamarine;
+    border-bottom: 3px solid #d2b48c; /* bege areia */
     padding-bottom: 0.5rem;
 }
 
 /* Form styles */
 .search-container {
-    background: #f0fff0;
+    background: #fcf8f2;
     padding: 1.5rem;
     border-radius: 8px;
     margin-bottom: 2rem;
-    border: 2px solid #2d4a2d;
+    border: 2px solid #3e2c1c;
 }
 
 .search-container label {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 600;
-    color: #2d4a2d;
+    color: #3e2c1c;
 }
 
 .search-input-group input,
@@ -93,37 +87,36 @@ section h2 {
 }
 
 fieldset {
-    border: 1px solid #6fa06f;
+    border: 1px solid #a1866f;
     border-radius: 8px;
-    padding: 1.0rem;
+    padding: 1rem;
     margin-bottom: 1rem;
-    background: #fafffe;
+    background: #fffdf9;
 }
 
 fieldset legend {
     font-weight: 600;
-    color: #2d4a2d;
+    color: #3e2c1c;
     padding: 0 0.5rem;
-    font-size: 1.0rem;
+    font-size: 1rem;
 }
 
 .form-group {
     margin-bottom: 1rem;
-   
 }
 
 .form-group label {
     display: block;
     margin-bottom: 0.2rem;
     font-weight: 600;
-    color: #2d4a2d;
+    color: #3e2c1c;
 }
 
 .form-group input,
 .form-group select {
     width: 100%;
     padding: 0.8rem;
-    border: 2px solid #c0e0c0;
+    border: 2px solid #e4d2c1;
     border-radius: 6px;
     font-size: 1rem;
     transition: all 0.3s ease;
@@ -133,9 +126,9 @@ fieldset legend {
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
-    border-color: aquamarine;
-    box-shadow: 0 0 0 3px rgba(127, 255, 212, 0.3);
-    background: #f9fffc;
+    border-color: #d2b48c;
+    box-shadow: 0 0 0 3px rgba(210, 180, 140, 0.3);
+    background: #fffcf7;
 }
 
 /* Button styles */
@@ -149,7 +142,7 @@ fieldset legend {
 
 button {
     padding: 0.8rem 2rem;
-    border: 1px solid #2d4a2d;
+    border: 1px solid #3e2c1c;
     border-radius: 6px;
     font-size: 1rem;
     font-weight: 600;
@@ -158,59 +151,60 @@ button {
     min-width: 100px;
 }
 
+/* Botões em tons terrosos */
 .btn-primary {
-    background: linear-gradient(135deg, aquamarine, #40e0d0);
-    color: #2d4a2d;
+    background: linear-gradient(135deg, #d2b48c, #c19a6b);
+    color: #3e2c1c;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #40e0d0, #20b2aa);
+    background: linear-gradient(135deg, #c19a6b, #a67b5b);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(64, 224, 208, 0.4);
+    box-shadow: 0 4px 12px rgba(193, 154, 107, 0.4);
 }
 
 .btn-secondary {
-    background: linear-gradient(135deg, #6fa06f, #5a8a5a);
+    background: linear-gradient(135deg, #6f4e37, #5a3e2b);
     color: white;
 }
 
 .btn-secondary:hover {
-    background: linear-gradient(135deg, #5a8a5a, #4a7a4a);
+    background: linear-gradient(135deg, #5a3e2b, #4a3325);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(106, 160, 111, 0.4);
+    box-shadow: 0 4px 12px rgba(111, 78, 55, 0.4);
 }
 
 .btn-save {
-    background: linear-gradient(135deg, #ffa600, #ffd53f);
+    background: linear-gradient(135deg, #b8860b, #daa520);
     color: white;
 }
 
 .btn-save:hover {
-    background: linear-gradient(135deg, #ffa600, #ffd53f);
+    background: linear-gradient(135deg, #daa520, #ffd700);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(106, 160, 111, 0.4);
+    box-shadow: 0 4px 12px rgba(184, 134, 11, 0.4);
 }
 
 .btn-danger {
-    background: linear-gradient(135deg, #dc3545, #c82333);
+    background: linear-gradient(135deg, #8b0000, #a52a2a);
     color: white;
 }
 
 .btn-danger:hover {
-    background: linear-gradient(135deg, #c82333, #a71e2a);
+    background: linear-gradient(135deg, #a52a2a, #800000);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+    box-shadow: 0 4px 12px rgba(165, 42, 42, 0.4);
 }
 
 .btn-cancel {
-    background: linear-gradient(135deg, #6c757d, #5a6268);
+    background: linear-gradient(135deg, #7d6e65, #5c514b);
     color: white;
 }
 
 .btn-cancel:hover {
-    background: linear-gradient(135deg, #5a6268, #495057);
+    background: linear-gradient(135deg, #5c514b, #3e2c1c);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+    box-shadow: 0 4px 12px rgba(62, 44, 28, 0.4);
 }
 
 .btn-small {
@@ -220,8 +214,8 @@ button {
 }
 
 .btn-id {
-    background: aquamarine;
-    color: #2d4a2d;
+    background: #d2b48c;
+    color: #3e2c1c;
     padding: 0.3rem 0.8rem;
     font-size: 0.9rem;
     font-weight: bold;
@@ -230,7 +224,7 @@ button {
 }
 
 .btn-id:hover {
-    background: #40e0d0;
+    background: #c19a6b;
     transform: scale(1.05);
 }
 
@@ -238,7 +232,7 @@ button {
 .table-container {
     max-height: 400px;
     overflow-y: auto;
-    border: 2px solid #e0f2e0;
+    border: 2px solid #f1e5d6;
     border-radius: 8px;
     background: white;
 }
@@ -250,7 +244,7 @@ table {
 }
 
 table thead {
-    background: linear-gradient(135deg, #2d4a2d, #4a7c59);
+    background: linear-gradient(135deg, #3e2c1c, #6f4e37);
     color: white;
     position: sticky;
     top: 0;
@@ -261,7 +255,7 @@ table th,
 table td {
     padding: 1rem;
     text-align: left;
-    border-bottom: 1px solid #e0f2e0;
+    border-bottom: 1px solid #f1e5d6;
 }
 
 table th {
@@ -276,15 +270,15 @@ table tbody tr {
 }
 
 table tbody tr:hover {
-    background-color: #f0fff0;
+    background-color: #fcf5ed;
 }
 
 table tbody tr:nth-child(even) {
-    background-color: #fafffe;
+    background-color: #fffaf5;
 }
 
 table tbody tr:nth-child(even):hover {
-    background-color: #f0fff0;
+    background-color: #fcf5ed;
 }
 
 /* Message styles */
@@ -305,27 +299,27 @@ table tbody tr:nth-child(even):hover {
 }
 
 .message.success {
-    background: linear-gradient(135deg, #d4edda, #c3e6cb);
-    color: #155724;
-    border: 1px solid #c3e6cb;
+    background: linear-gradient(135deg, #e9f5e1, #d7ecd3);
+    color: #2e462e;
+    border: 1px solid #c3dec0;
 }
 
 .message.error {
-    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+    background: linear-gradient(135deg, #f5d7d7, #f1c0c0);
+    color: #5e1c1c;
+    border: 1px solid #f1c0c0;
 }
 
 .message.warning {
-    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
-    color: #856404;
-    border: 1px solid #ffeaa7;
+    background: linear-gradient(135deg, #fff3cd, #ffe8a1);
+    color: #5c4212;
+    border: 1px solid #ffe8a1;
 }
 
 .message.info {
-    background: linear-gradient(135deg, #d1ecf1, aquamarine);
-    color: #0c5460;
-    border: 1px solid #b8daff;
+    background: linear-gradient(135deg, #f0e5da, #d2b48c);
+    color: #3e2c1c;
+    border: 1px solid #c19a6b;
 }
 
 @keyframes slideIn {
@@ -333,7 +327,6 @@ table tbody tr:nth-child(even):hover {
         transform: translateX(100%);
         opacity: 0;
     }
-
     to {
         transform: translateX(0);
         opacity: 1;
@@ -342,64 +335,9 @@ table tbody tr:nth-child(even):hover {
 
 /* Footer */
 footer {
-    background: #2d4a2d;
+    background: #3e2c1c;
     color: white;
     text-align: center;
     padding: 1.5rem;
     margin-top: 1rem;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-    main {
-        padding: 0 1rem;
-    }
-
-    header h1 {
-        font-size: 2rem;
-    }
-
-    .search-input-group {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .search-input-group input {
-        max-width: none;
-        margin-bottom: 0.5rem;
-    }
-
-    .button-group {
-        flex-direction: column;
-    }
-
-    button {
-        min-width: auto;
-    }
-
-    table {
-        font-size: 0.85rem;
-    }
-
-    table th,
-    table td {
-        padding: 0.5rem;
-    }
-
-    .message-container {
-        top: 10px;
-        right: 10px;
-        left: 10px;
-    }
-}
-
-@media (max-width: 480px) {
-    section {
-        padding: 1rem;
-    }
-
-    .search-container,
-    fieldset {
-        padding: 1rem;
-    }
 }

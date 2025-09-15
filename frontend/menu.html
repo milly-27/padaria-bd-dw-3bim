@@ -1,69 +1,65 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
-  <meta charset="UTF-8">
-  <title>Menu Principal</title>
-  <link rel="stylesheet" href="menu.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Principal</title>
+    <link rel="stylesheet" href="menu.css">
 </head>
-
 <body>
-  <header>
-    <div class="topo">
-      <h3>Menu Principal</h3>
-      <select id="oUsuario" onchange="handleUserAction(this.value)">
-        <option value="">usuario</option>
-        <option value="gerenciar-conta">Gerenciar Conta</option>
-        <option value="sair">Sair</option>
-      </select>
-    </div>
+    <header>
+        <div class="topo">
+            <h3>Menu Principal</h3>
+            <div class="user-section">
+                <button id="btnLogin" onclick="redirecionarLogin()">Login</button>
+                <div id="userInfo" class="user-info hidden" onclick="logout()">
+                    <div class="user-name" id="userName"></div>
+                    <div class="logout-tooltip">Clique para sair</div>
+                </div>
+            </div>
+        </div>
+        <nav class="nav">
+            <ul class="nav__menu">
+                <li class="nav__menu-item"><a href="#">Home</a></li>
+                <li class="nav__menu-item">
+                    <a href="#">Cadastros</a>
+                    <ul class="nav__submenu">
+                        <li class="nav__submenu-item"><a href="http://localhost:3001/pessoas/abrirCrudPessoa">Pessoa</a></li>
+                        <li class="nav__submenu-item"><a href="http://localhost:3001/cargos/abrirCrudCargo">Cargo</a></li>
+                        <li class="nav__submenu-item"><a href="http://localhost:3001/produtos/abrirCrudProduto">Produto</a></li>
+                        <li class="nav__submenu-item"><a href="http://localhost:3001/categorias/abrirCrudCategoria">Categoria</a></li>
+                        <li class="nav__submenu-item"><a href="http://localhost:3001/avaliacao/abrirCrudAvaliacao">Avaliação</a></li>
+                    </ul>
+                </li>
+                <li class="nav__menu-item">
+                    <a href="#">About</a>
+                    <ul class="nav__submenu">
+                        <li class="nav__submenu-item"><a href="#">Our Company</a></li>
+                        <li class="nav__submenu-item"><a href="#">Our Team</a></li>
+                        <li class="nav__submenu-item"><a href="#">Our Reach</a></li>
+                    </ul>
+                </li>
+                <li class="nav__menu-item"><a href="#">Blog</a></li>
+                <li class="nav__menu-item"><a href="#">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
 
-    <nav class="nav">
-      <ul class="nav__menu">
-        <li class="nav__menu-item"><a href="#">Home</a></li>
-
-        <li class="nav__menu-item">
-          <a href="#">Cadastros</a>
-          <ul class="nav__submenu">
-            <li class="nav__submenu-item"><a href="http://localhost:3001/pessoas/abrirCrudPessoa">Pessoa</a></li>
-            <li class="nav__submenu-item"><a href="http://localhost:3001/cargos/abrirCrudCargo">Cargo</a></li>
-            <li class="nav__submenu-item"><a href="http://localhost:3001/produtos/abrirCrudProduto">Produto</a></li>
-            <li class="nav__submenu-item"><a href="http://localhost:3001/categorias/abrirCrudCategoria">Categoria</a></li>
-            <li class="nav__submenu-item"><a href="http://localhost:3001/avaliacao/abrirCrudAvaliacao">Avaliação</a></li>          
+    <main>
+        <section>
+            <h2>Bem-vindo ao Sistema AVAP</h2>
+            <p>Sistema de Gerenciamento integrado. Use o menu acima para navegar pelas funcionalidades disponíveis.</p>
             
-          </ul>
-        </li>
+            <div id="loginMessage" class="hidden" style="margin-top: 2rem; padding: 1rem; background: #e8f5e8; border-left: 4px solid #4caf50; border-radius: 4px;">
+                <p><strong>Você está logado!</strong> Utilize o menu de navegação para acessar as funcionalidades do sistema.</p>
+            </div>
+        </section>
+    </main>
 
-        <li class="nav__menu-item">
-          <a href="#">About</a>
-          <ul class="nav__submenu">
-            <li class="nav__submenu-item"><a href="#">Our Company</a></li>
-            <li class="nav__submenu-item"><a href="#">Our Team</a></li>
-            <li class="nav__submenu-item"><a href="#">Our Reach</a></li>
-          </ul>
-        </li>
+    <footer>
+        <p>&copy; 2025 - Sistema AVAP</p>
+    </footer>
 
-        <li class="nav__menu-item"><a href="#">Blog</a></li>
-        <li class="nav__menu-item"><a href="#">Contact</a></li>
-
-      </ul>
-    </nav>
-  </header>
-
-  <main>
-
-    <section>
-      <p>section main....</p>
-    </section>
-
-  </main>
-
-  <footer>
-    <p>&copy; 2025 - Meu Site</p>
-  </footer>
-
-  <script src="./menu.js"></script>
-
+    <script src="menu.js"></script>
 </body>
-
 </html>

@@ -1,75 +1,444 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
-  <meta charset="UTF-8">
-  <title>Avap - Login</title>
-</head>
-
-<body>
-  <h2>Login</h2>
-  <div id="loginFrame">
-    <input type="email" id="email" placeholder="Digite seu e-mail" value="berola@gmail.com" required />
-    <button onclick="verificarEmail()">Avançar</button>  
-  </div>
-
-  <div id="senhaFrame" style="display:none;">
-    <p id="nomeUsuario"></p>
-    <input type="password" id="senha" placeholder="Digite sua senha" value="123" required />
-    <button onclick="verificarSenha()">Entrar</button>
-
-  </div>
-
-  <script>
-    let emailGlobal = '';
-    const API_BASE_URL = 'http://localhost:3001'; // Define  o host e a porta do servidor
-
-
-    async function verificarEmail() {
-      const email = document.getElementById("email").value;
-      emailGlobal = email;
-
-      const response = await fetch(`${API_BASE_URL}/login/verificarEmail`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-
-      const data = await response.json();
-
-      if (data.status === 'existe') {
-        document.getElementById("loginFrame").style.display = "none";
-        document.getElementById("senhaFrame").style.display = "block";
-        document.getElementById("nomeUsuario").innerText = `Olá, ${data.nome}`;
-      } else {
-        const cadastrar = confirm("E-mail não encontrado. Deseja se cadastrar?");
-        if (cadastrar) {
-          alert("Redirecionando para tela de cadastro... (não implementado)");
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avap - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-      }
-    }
 
-    async function verificarSenha() {
-      const senha = document.getElementById("senha").value;
-      //  alert("Verificando senha..." + senha);
-      const res = await fetch(API_BASE_URL + '/login/verificarSenha', {
-        credentials: 'include',
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailGlobal, senha }),
-        credentials: 'include'
-      });
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
 
-      const data = await res.json();
-      //  alert("Resposta do servidor: " + JSON.stringify(data));
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 400px;
+            transition: transform 0.3s ease;
+        }
 
-      if (data.status === 'ok') {
-        window.location.href = API_BASE_URL + "/menu";
-      } else {
-        alert("Senha incorreta!");
-      }
-    }
-  </script>
+        .login-container:hover {
+            transform: translateY(-5px);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo h1 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .form-frame {
+            transition: all 0.3s ease;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .input-container {
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .form-input::placeholder {
+            color: #999;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .user-welcome {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .back-button {
+            background: none;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-decoration: underline;
+            margin-bottom: 1rem;
+            transition: color 0.3s ease;
+        }
+
+        .back-button:hover {
+            color: #764ba2;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            border-left: 4px solid #c62828;
+        }
+
+        .success-message {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .forgot-password {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .forgot-password a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        .forgot-password a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e0e0e0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .register-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+
+            .logo h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>AVAP</h1>
+            <p>Sistema de Gerenciamento</p>
+        </div>
+
+        <div id="loginFrame" class="form-frame">
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <div class="input-container">
+                    <input type="email" id="email" class="form-input" placeholder="Digite seu e-mail" required />
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="senha">Senha</label>
+                <div class="input-container">
+                    <input type="password" id="senha" class="form-input" placeholder="Digite sua senha" required />
+                </div>
+            </div>
+            
+            <button id="btnEntrar" class="btn" onclick="fazerLogin()">Entrar</button>
+            
+            <div class="forgot-password">
+                <a href="#" onclick="esqueciSenha()">Esqueci minha senha</a>
+            </div>
+            
+            <div class="register-link">
+                Não tem uma conta? <a href="#" onclick="mostrarCadastro()">Cadastre-se</a>
+            </div>
+        </div>
+
+        <div id="messageContainer"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3001';
+
+        function mostrarMensagem(mensagem, tipo = 'error') {
+            const container = document.getElementById('messageContainer');
+            const classe = tipo === 'error' ? 'error-message' : 'success-message';
+            container.innerHTML = `<div class="${classe}">${mensagem}</div>`;
+            
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        function mostrarLoading(botaoId, texto = '') {
+            const botao = document.getElementById(botaoId);
+            botao.disabled = true;
+            botao.innerHTML = `<span class="loading"></span>${texto || 'Carregando...'}`;
+        }
+
+        function ocultarLoading(botaoId, textoOriginal) {
+            const botao = document.getElementById(botaoId);
+            botao.disabled = false;
+            botao.innerHTML = textoOriginal;
+        }
+
+        async function fazerLogin() {
+            const email = document.getElementById("email").value.trim();
+            const senha = document.getElementById("senha").value.trim();
+            
+            // Validações básicas
+            if (!email) {
+                mostrarMensagem('Por favor, digite seu e-mail.');
+                document.getElementById("email").focus();
+                return;
+            }
+
+            if (!isEmailValido(email)) {
+                mostrarMensagem('Por favor, digite um e-mail válido.');
+                document.getElementById("email").focus();
+                return;
+            }
+
+            if (!senha) {
+                mostrarMensagem('Por favor, digite sua senha.');
+                document.getElementById("senha").focus();
+                return;
+            }
+
+            mostrarLoading('btnEntrar', 'Entrando...');
+
+            try {
+                // Buscar todas as pessoas para encontrar por email
+                const response = await fetch(`${API_BASE_URL}/pessoas`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Status da resposta:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Erro na resposta:', errorText);
+                    throw new Error(`Erro do servidor: ${response.status}`);
+                }
+
+                const pessoas = await response.json();
+                console.log('Pessoas encontradas:', pessoas);
+                
+                if (!Array.isArray(pessoas)) {
+                    throw new Error('Resposta inválida do servidor');
+                }
+
+                // Procurar pessoa pelo email
+                const pessoaEncontrada = pessoas.find(pessoa => {
+                    console.log('Verificando pessoa:', pessoa);
+                    return pessoa.email_pessoa && 
+                           pessoa.email_pessoa.toLowerCase().trim() === email.toLowerCase().trim();
+                });
+
+                console.log('Pessoa encontrada:', pessoaEncontrada);
+
+                if (!pessoaEncontrada) {
+                    mostrarMensagem('E-mail não encontrado. Verifique se você já está cadastrado.');
+                    document.getElementById("email").focus();
+                    return;
+                }
+
+                // Verificar se a senha confere
+                if (pessoaEncontrada.senha_pessoa !== senha) {
+                    mostrarMensagem('Senha incorreta. Tente novamente.');
+                    document.getElementById("senha").focus();
+                    document.getElementById("senha").select();
+                    return;
+                }
+
+                // Login bem-sucedido
+                mostrarMensagem(`Bem-vindo(a), ${pessoaEncontrada.nome_pessoa}!`, 'success');
+                
+                // Armazenar dados do usuário logado
+                sessionStorage.setItem('usuarioLogado', JSON.stringify({
+                    cpf: pessoaEncontrada.cpf,
+                    nome: pessoaEncontrada.nome_pessoa,
+                    email: pessoaEncontrada.email_pessoa
+                }));
+                
+                // Aguardar um pouco antes de redirecionar
+                setTimeout(() => {
+                    // Redirecionar para o menu principal
+                    window.location.href = "menu.html";
+                }, 1500);
+
+            } catch (error) {
+                console.error('Erro detalhado:', error);
+                
+                if (error.message.includes('Failed to fetch')) {
+                    mostrarMensagem('Erro: Não foi possível conectar com o servidor. Verifique se o servidor está rodando na porta 3001.');
+                } else if (error.message.includes('NetworkError')) {
+                    mostrarMensagem('Erro de rede. Verifique sua conexão com a internet.');
+                } else {
+                    mostrarMensagem(`Erro: ${error.message}`);
+                }
+            } finally {
+                ocultarLoading('btnEntrar', 'Entrar');
+            }
+        }
+
+        function isEmailValido(email) {
+            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return regex.test(email);
+        }
+
+        function esqueciSenha() {
+            const email = document.getElementById("email").value.trim();
+            if (!email) {
+                mostrarMensagem('Digite seu e-mail primeiro para recuperar a senha.');
+                document.getElementById("email").focus();
+                return;
+            }
+            
+            // Implementar recuperação de senha
+            alert(`Funcionalidade de recuperação de senha para ${email} não implementada ainda.`);
+        }
+
+        function mostrarCadastro() {
+            const email = document.getElementById("email").value.trim();
+            // Redirecionar para a tela de cadastro passando o email como parâmetro se houver
+            if (email && isEmailValido(email)) {
+                window.location.href = `cadastro.html?email=${encodeURIComponent(email)}`;
+            } else {
+                window.location.href = `cadastro.html`;
+            }
+        }
+
+        // Adicionar eventos de teclado para melhor UX
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('email').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('senha').focus();
+                }
+            });
+
+            document.getElementById('senha').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    fazerLogin();
+                }
+            });
+
+            // Focar no campo de email ao carregar a página
+            document.getElementById('email').focus();
+        });
+    </script>
 </body>
-
 </html>

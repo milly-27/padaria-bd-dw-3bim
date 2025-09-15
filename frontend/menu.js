@@ -1,66 +1,105 @@
-function handleUserAction(action) {
-  if (action === "gerenciar-conta") {
-    alert("Redirecionando para a página de Gerenciar Conta...");
-    // window.location.href = "/gerenciar-conta";
-  } else if (action === "sair") {
-    alert("Desconectando...");
-    // logout();
-  }
-}
-
-// A função 'logout' original
-function logout() {
-  alert("Desconectando...");
-  // window.location.href = "/login";
-}
-
 const API_BASE_URL = 'http://localhost:3001';
-let ehProfessor = false;
 
+// Função para redirecionar para a tela de login
+function redirecionarLogin() {
+    window.location.href = 'login/login.html';
+}
 
+// Função para fazer logout
+function logout() {
+    if (confirm('Deseja realmente sair do sistema?')) {
+        // Limpar dados da sessão
+        sessionStorage.removeItem('usuarioLogado');
+        
+        // Esconder informações do usuário e mostrar botão de login
+        document.getElementById('userInfo').classList.add('hidden');
+        document.getElementById('btnLogin').classList.remove('hidden');
+        document.getElementById('loginMessage').classList.add('hidden');
+        
+        // Opcional: redirecionar para a página de login
+        // window.location.href = 'login.html';
+        
+        alert('Logout realizado com sucesso!');
+    }
+}
 
-//essa função só existe para teste inicial
+// Função para verificar se o usuário está logado
+function verificarLogin() {
+    const usuarioLogado = sessionStorage.getItem('usuarioLogado');
+    
+    if (usuarioLogado) {
+        const userData = JSON.parse(usuarioLogado);
+        mostrarUsuarioLogado(userData);
+    }
+}
+
+// Função para mostrar informações do usuário logado
+function mostrarUsuarioLogado(userData) {
+    const btnLogin = document.getElementById('btnLogin');
+    const userInfo = document.getElementById('userInfo');
+    const userName = document.getElementById('userName');
+    const loginMessage = document.getElementById('loginMessage');
+    
+    // Esconder botão de login
+    btnLogin.classList.add('hidden');
+    
+    // Mostrar informações do usuário
+    userName.textContent = userData.nome;
+    userInfo.classList.remove('hidden');
+    
+    // Mostrar mensagem de boas-vindas
+    loginMessage.classList.remove('hidden');
+}
+
+// Verificar login ao carregar a página
+document.addEventListener('DOMContentLoaded', function() {
+    verificarLogin();
+});
+
+// Função para simular login (para teste)
+function simularLogin() {
+    const userData = {
+        cpf: '12345678901',
+        nome: 'Berola da Silva',
+        email: 'berola@gmail.com'
+    };
+    
+    sessionStorage.setItem('usuarioLogado', JSON.stringify(userData));
+    mostrarUsuarioLogado(userData);
+}
+
+// Adicionar evento para testar o login (remover em produção)
+document.addEventListener('keydown', function(e) {
+    // Pressionar Ctrl+L para simular login (apenas para teste)
+    if (e.ctrlKey && e.key === 'l') {
+        e.preventDefault();
+        simularLogin();
+    }
+});
+
+// Funções originais mantidas para compatibilidade
+function handleUserAction(action) {
+    if (action === "gerenciar-conta") {
+        alert("Redirecionando para a página de Gerenciar Conta...");
+        // window.location.href = "/gerenciar-conta";
+    } else if (action === "sair") {
+        logout();
+    }
+}
+
+// Função de logout alternativa (mantida para compatibilidade)
+function logout2() {
+    logout();
+}
+
+// Função original nomeUsuario (mantida para compatibilidade)
 function nomeUsuario() {
-  const combobox = document.getElementById("oUsuario");
-  const primeiraOpcao = combobox.options[0];
-  primeiraOpcao.text = "Berola da Silva";
-
- //  usuarioAutorizado();
-
-
+    // Esta função foi substituída pelo sistema de verificarLogin()
+    verificarLogin();
 }
 
-// Chame a função quando a página carregar
-window.onload = nomeUsuario;
-
+// Função para verificação de usuário autorizado (placeholder)
 async function usuarioAutorizado() {
-  
-  const rota = API_BASE_URL + '/login/verificaSeUsuarioEstaLogado';
-  alert('Rota: ' + rota);
-  
-  const res = await fetch(rota, { credentials: 'include' });
-  alert(JSON.stringify(data));
-
-
-
-
-  const data = await res.json();
-  if (data.status === 'ok') {
-    document.getElementById('boasVindas').innerText =
-      `${data.nome} - ${data.mnemonicoProfessor ? `Professor: ${data.mnemonicoProfessor}` : ''}`;
-    if (data.mnemonicoProfessor) ehProfessor = true;
-  } else {
-    alert("Você precisa fazer login.");
-    window.location.href = "./login/login.html";
-  }
+    // Implementar conforme necessidade da API
+    console.log('Função usuarioAutorizado() - implementar conforme API');
 }
-
-async function logout2() {
-  await fetch('http://localhost:3005/logout', {
-    method: 'POST',
-    credentials: 'include'
-  });
-  window.location.href = "http://localhost:3005/inicio";
-}
-
-// usuarioAutorizado();
