@@ -109,6 +109,9 @@ app.use('/pessoas', pessoaRoutes);
 
 const produtoRoutes = require('./routes/produtoRoutes');
 app.use('/produtos', produtoRoutes);
+
+const loginRoutes = require('./routes/loginRoutes'); 
+app.use('/', loginRoutes); // Usando suas rotas
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Rota padrão

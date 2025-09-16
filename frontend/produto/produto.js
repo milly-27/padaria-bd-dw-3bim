@@ -1,4 +1,3 @@
-
 // Configuração da API, IP e porta.
 const API_BASE_URL = 'http://localhost:3001';
 let currentPersonId = null;
@@ -126,7 +125,7 @@ function preencherFormulario(produto) {
     document.getElementById('preco').value = produto.preco || '';
     document.getElementById('quantidade_estoque').value = produto.quantidade_estoque || '';
     document.getElementById('id_categoria').value = produto.id_categoria || '';
-  }  
+}  
 
 
 // Função para incluir produto
@@ -179,14 +178,26 @@ async function excluirProduto() {
 async function salvarOperacao() {
     console.log('Operação:', operacao + ' - currentPersonId: ' + currentPersonId + ' - searchId: ' + searchId.value);
 
+    // CORREÇÃO: Usar FormData para capturar todos os campos do formulário
     const formData = new FormData(form);
+    
+    // CORREÇÃO: Verificar se id_categoria foi selecionado
+    const idCategoria = formData.get('id_categoria');
+    if (!idCategoria || idCategoria === '') {
+        mostrarMensagem('Por favor, selecione uma categoria', 'warning');
+        return;
+    }
+
     const produto = {
         id_produto: searchId.value,
         nome_produto: formData.get('nome_produto'),
         preco: Number(formData.get('preco')),
         quantidade_estoque: Number(formData.get('quantidade_estoque')),
-        id_categoria: Number(formData.get('id_categoria'))
+        id_categoria: Number(idCategoria) // CORREÇÃO: Garantir que seja um número
     };
+    
+    // CORREÇÃO: Log para debug - verificar se id_categoria está sendo capturado
+    console.log('Dados do produto a serem enviados:', produto);
     
     let response = null;
     try {
@@ -302,6 +313,8 @@ function renderizarTabelaProdutos(produtos) {
             <td>${produto.nome_produto}</td>
             <td>${produto.preco}</td>
             <td>${produto.quantidade_estoque}</td>
+                        <td>${produto.id_categoria}</td>
+
         `;
         produtosTableBody.appendChild(row);
     });
@@ -313,3 +326,4 @@ async function selecionarProduto(id) {
     searchId.value = id;
     await buscarProduto();
 }
+

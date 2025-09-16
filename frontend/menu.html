@@ -13,8 +13,8 @@
             <div class="user-section">
                 <button id="btnLogin" onclick="redirecionarLogin()">Login</button>
                 <div id="userInfo" class="user-info hidden" onclick="logout()">
-                    <div class="user-name" id="userName"></div>
-                    <div class="logout-tooltip">Clique para sair</div>
+                    <span id="userName"></span>
+                    <span class="logout-tooltip">Clique para deslogar</span>
                 </div>
             </div>
         </div>
@@ -31,14 +31,7 @@
                         <li class="nav__submenu-item"><a href="http://localhost:3001/avaliacao/abrirCrudAvaliacao">Avaliação</a></li>
                     </ul>
                 </li>
-                <li class="nav__menu-item">
-                    <a href="#">About</a>
-                    <ul class="nav__submenu">
-                        <li class="nav__submenu-item"><a href="#">Our Company</a></li>
-                        <li class="nav__submenu-item"><a href="#">Our Team</a></li>
-                        <li class="nav__submenu-item"><a href="#">Our Reach</a></li>
-                    </ul>
-                </li>
+                <li class="nav__menu-item"><a href="#">About</a></li>
                 <li class="nav__menu-item"><a href="#">Blog</a></li>
                 <li class="nav__menu-item"><a href="#">Contact</a></li>
             </ul>
@@ -49,8 +42,7 @@
         <section>
             <h2>Bem-vindo ao Sistema AVAP</h2>
             <p>Sistema de Gerenciamento integrado. Use o menu acima para navegar pelas funcionalidades disponíveis.</p>
-            
-            <div id="loginMessage" class="hidden" style="margin-top: 2rem; padding: 1rem; background: #e8f5e8; border-left: 4px solid #4caf50; border-radius: 4px;">
+            <div id="loginMessage" class="hidden">
                 <p><strong>Você está logado!</strong> Utilize o menu de navegação para acessar as funcionalidades do sistema.</p>
             </div>
         </section>
