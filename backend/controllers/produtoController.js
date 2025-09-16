@@ -6,9 +6,23 @@ exports.abrirCrudProduto = (req, res) => {
   res.sendFile(path.join(__dirname, "../../frontend/produto/produto.html"));
 };
 
+// MODIFICADO: Agora retorna o nome da categoria junto com os dados do produto
 exports.listarProdutos = async (req, res) => {
   try {
-    const result = await query("SELECT * FROM produto ORDER BY id_produto");
+    // JOIN com a tabela categoria para obter o nome da categoria
+    const result = await query(`
+      SELECT 
+        p.id_produto,
+        p.nome_produto,
+        p.preco,
+        p.quantidade_estoque,
+        p.id_categoria,
+        c.nome_categoria
+      FROM produto p
+      INNER JOIN categoria c ON p.id_categoria = c.id_categoria
+      ORDER BY p.id_produto
+    `);
+    
     res.json(result.rows);
   } catch (error) {
     console.error("Erro ao listar produtos:", error);

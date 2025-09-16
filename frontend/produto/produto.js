@@ -298,7 +298,7 @@ async function carregarCategorias() {
 }
 
 
-// Função para renderizar tabela de produtos
+// MODIFICADO: Função para renderizar tabela de produtos - agora exibe o nome da categoria
 function renderizarTabelaProdutos(produtos) {
     produtosTableBody.innerHTML = '';
 
@@ -311,10 +311,9 @@ function renderizarTabelaProdutos(produtos) {
                 </button>
             </td>
             <td>${produto.nome_produto}</td>
-            <td>${produto.preco}</td>
+            <td>R$ ${Number(produto.preco).toFixed(2)}</td>
             <td>${produto.quantidade_estoque}</td>
-                        <td>${produto.id_categoria}</td>
-
+            <td>${produto.nome_categoria || 'Categoria não encontrada'}</td>
         `;
         produtosTableBody.appendChild(row);
     });
