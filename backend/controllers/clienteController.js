@@ -19,6 +19,38 @@ exports.listarClientes = async (req, res) => {
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 }
+// Em clienteController.js
+
+exports.criarCliente = async (req, res) => {
+  try {
+    const { cpf } = req.body; // Apenas o CPF é necessário
+
+    // Validação básica
+    if (!cpf) {
+      return res.status(400).json({
+        error: 'CPF é obrigatório'
+      });
+    }
+
+    const result = await query(
+      'INSERT INTO cliente (cpf) VALUES ($1) RETURNING *',
+      [cpf]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Erro ao criar cliente:', error);
+
+    // Verifica se é erro de chave primária duplicada (cliente já existe)
+    if (error.code === '23505') { // '23505' é o código de erro para unique_violation
+      return res.status(409).json({ // 409 Conflict é mais apropriado aqui
+        error: 'Este CPF já está cadastrado como cliente'
+      });
+    }
+
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+}
 
 exports.criarCliente = async (req, res) => {
   //  console.log('Criando cliente com dados:', req.body);

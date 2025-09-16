@@ -220,11 +220,6 @@ async function salvarOperacao() {
         senha_pessoa: formData.get('senha_pessoa') || ''
     };
 
-    // lê diretamente do DOM (funciona mesmo se os campos estiverem fora do form)
-    const isFuncionario = document.getElementById('checkboxFuncionario').checked;
-    const salarioFuncionario = parseFloat(document.getElementById('salarioFuncionario').value);
-    const idCargo = parseInt(document.getElementById('cargo_pessoa_cpf').value);
-
     try {
         let response = null;
 
@@ -257,54 +252,20 @@ async function salvarOperacao() {
 
             const novaPessoa = await response.json(); // normalmente o backend retorna a pessoa criada/atualizada
             mostrarMensagem('Operação ' + operacao + ' realizada com sucesso!', 'success');
-
-            // Se é funcionário, salva/atualiza a tabela funcionario
-            if (isFuncionario) {
-                // validações
-                if (!idCargo || isNaN(idCargo) || isNaN(salarioFuncionario) || salarioFuncionario <= 0) {
-                    mostrarMensagem('Selecione um cargo e informe o salário válido!', 'error');
-                    return;
+            try {
+                const cliente = { cpf: cpf };
+                const respCliente = await fetch(`${API_BASE_URL}/clientes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(cliente)
+                });
+                if (respCliente.ok) {
+                    mostrarMensagem('CPF adicionado/confirmado na tabela de clientes.', 'success');
+                } else if (respCliente.status !== 409) { // 409 = Conflict (já existe), o que é normal
+                    mostrarMensagem('Não foi possível adicionar o CPF à tabela de clientes.', 'warning');
                 }
-
-                const funcionario = {
-                    cpf: cpf,          // campo esperado pelo controller: cpf
-                    id_cargo: idCargo,
-                    salario: salarioFuncionario
-                };
-
-                try {
-                    if (operacao === 'incluir') {
-                        const respFunc = await fetch(`${API_BASE_URL}/funcionarios`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(funcionario)
-                        });
-
-                        if (!respFunc.ok) {
-                            const err = await respFunc.json().catch(() => ({}));
-                            mostrarMensagem(err.error || 'Erro ao salvar funcionário', 'error');
-                        } else {
-                            mostrarMensagem('Funcionário salvo com sucesso!', 'success');
-                        }
-                    } else if (operacao === 'alterar') {
-                        // supondo que você tenha rota PUT /funcionarios/:cpf para atualizar funcionário
-                        const respFunc = await fetch(`${API_BASE_URL}/funcionarios/${cpf}`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(funcionario)
-                        });
-
-                        if (!respFunc.ok) {
-                            const err = await respFunc.json().catch(() => ({}));
-                            mostrarMensagem(err.error || 'Erro ao atualizar funcionário', 'error');
-                        } else {
-                            mostrarMensagem('Dados de funcionário atualizados', 'success');
-                        }
-                    }
-                } catch (err) {
-                    console.error('Erro ao salvar/atualizar funcionário:', err);
-                    mostrarMensagem('Erro ao salvar dados de funcionário', 'error');
-                }
+            } catch (e) {
+                console.error("Erro ao tentar salvar cliente:", e);
             }
 
             // limpa e recarrega
