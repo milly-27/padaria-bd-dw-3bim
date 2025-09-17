@@ -271,3 +271,24 @@ footer {
         font-size: 1.8rem;
     }
 }
+
+
+.nav__menu-item img {
+    width: 24px; /* Tamanho do ícone */
+    height: 24px;
+    vertical-align: middle;
+    margin-right: 5px; /* Espaçamento entre o ícone e o texto, se houver */
+}
+
+.nav__menu-item a[href="#carrinho"] {
+    padding: 0.7rem 1rem; /* Ajuste de padding para o botão do carrinho */
+}
+
+.nav__menu-item a[href="#carrinho"]:hover {
+    background: var(--accent);
+    color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+

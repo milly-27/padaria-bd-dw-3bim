@@ -21,6 +21,9 @@ console.log('Caminho frontend:', caminhoFrontend);
 
 app.use(express.static(caminhoFrontend));
 
+// Servir arquivos de upload como estáticos
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 
 
 app.use(cookieParser());
@@ -112,6 +115,18 @@ app.use('/produtos', produtoRoutes);
 
 const loginRoutes = require('./routes/loginRoutes'); 
 app.use('/', loginRoutes); // Usando suas rotas
+
+const funcionarioRoutes = require('./routes/funcionarioRoutes');
+app.use('/funcionarios', funcionarioRoutes);
+
+const clienteRoutes = require('./routes/clienteRoutes');
+app.use('/clientes', clienteRoutes);
+
+const cardapioRoutes = require('./routes/cardapioRoutes');
+app.use('/cardapio', cardapioRoutes);
+
+const authRoutes = require('./routes/authRoutes');
+app.use('/auth', authRoutes);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Rota padrão
@@ -184,12 +199,18 @@ const startServer = async () => {
     console.log('Testando conexão com PostgreSQL...');
     const connectionTest = await db.testConnection();
 
-    if (!connectionTest) {
+    if (connectionTest === 'mock') {
+      console.log('🔄 Usando dados mockados para desenvolvimento');
+      // Importar dados mockados
+      const mockData = require('./mockData');
+      global.useMockData = true;
+      global.mockDatabase = mockData;
+    } else if (!connectionTest) {
       console.error('❌ Falha na conexão com PostgreSQL');
       process.exit(1);
+    } else {
+      console.log('✅ PostgreSQL conectado com sucesso');
     }
-
-    console.log('✅ PostgreSQL conectado com sucesso');
 
     const PORT = process.env.PORT || PORT_FIXA;
 

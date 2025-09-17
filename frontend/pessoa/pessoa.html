@@ -21,7 +21,7 @@
                 <div class="search-container">
                     <label for="searchId">Buscar por CPF:</label>
                     <div class="search-input-group">
-                        <input type="number" id="searchId" placeholder="Digite o ID para buscar">
+                        <input type="text" id="searchId" placeholder="Digite o CPF para buscar">
                         <button type="button" id="btnBuscar">🔍 Buscar</button>
 
                         <button type="button" id="btnIncluir" class="btn-primary">Incluir</button>
@@ -50,7 +50,40 @@
                         <label for="senha_pessoa">Senha:</label>
                         <input type="password" id="senha_pessoa" name="senha_pessoa" required>
                     </div>
-                      
+                    <div class="form-group">
+                        <label for="cpf_pessoa">CPF:</label>
+                        <input type="text" id="cpf_pessoa" name="cpf_pessoa" required maxlength="11" placeholder="Apenas números">
+                    </div>
+
+                    <div class="checkbox-section">
+                        <div class="funcionario-section">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="checkboxFuncionario" name="checkboxFuncionario">
+                                <label for="checkboxFuncionario">É Funcionário</label>
+                            </div>
+                            
+                            <div id="funcionarioFields" class="funcionario-fields" style="display: none;">
+                                <div class="form-group">
+                                    <label for="salario">Salário:</label>
+                                    <input type="number" id="salario" name="salario" placeholder="0.00" step="0.01" min="0">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="id_cargo">Cargo:</label>
+                                    <select id="id_cargo" name="id_cargo">
+                                        <option value="">Selecione um cargo</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="cliente-section">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="checkboxCliente" name="checkboxCliente">
+                                <label for="checkboxCliente">É Cliente</label>
+                            </div>
+                        </div>
+                    </div>
                 </fieldset>
             </form>
         </section>
@@ -63,7 +96,10 @@
                             <th>CPF</th>
                             <th>Nome</th>
                             <th>Email</th>
-                            <th>Senha</th>
+                            <th>Funcionário</th>
+                            <th>Cliente</th>
+                            <th>Cargo</th>
+                            <th>Salário</th>
                         </tr>
                     </thead>
                     <tbody id="pessoasTableBody">

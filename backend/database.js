@@ -39,13 +39,14 @@ const testConnection = async () => {
     console.log('Conectado ao PostgreSQL com sucesso!');
 
     // Definir o search_path para o schema peer
-    await client.query('SET search_path TO ' + schema);
+    await client.query('SET search_path TO public');
 
     client.release();
     return true;
   } catch (err) {
     console.error('Erro ao conectar com o PostgreSQL:', err);
-    return false;
+    console.log('🔄 Usando dados mockados para desenvolvimento...');
+    return 'mock';
   }
 };
 
@@ -54,7 +55,7 @@ const query = async (text, params) => {
   const client = await pool.connect();
   try {
     // Definir o search_path antes de executar a query
-    await client.query('SET search_path TO peer, public');
+    await client.query('SET search_path TO public');
     const result = await client.query(text, params);
     return result;
   } catch (error) {
@@ -70,7 +71,7 @@ const transaction = async (callback) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    await client.query('SET search_path TO peer, public');
+    await client.query('SET search_path TO public');
 
     const result = await callback(client);
 

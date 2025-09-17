@@ -7,6 +7,7 @@ const clienteController = require('./../controllers/clienteController');
 router.get('/abrirCrudCliente', clienteController.abrirCrudCliente);
 router.get('/', clienteController.listarClientes);
 router.post('/', clienteController.criarCliente);
+router.get('/pessoa/:cpf', clienteController.obterClientePorCpf);
 router.get('/:id', clienteController.obterCliente);
 router.put('/:id', clienteController.atualizarCliente);
 router.delete('/:id', clienteController.deletarCliente);

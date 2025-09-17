@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS produto (
     preco DECIMAL(10, 2) NOT NULL,
     id_categoria INT NOT NULL,
     quantidade_estoque INT NOT NULL,
+    imagem_produto VARCHAR(255),
     FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria)
         ON DELETE RESTRICT ON UPDATE CASCADE
 );

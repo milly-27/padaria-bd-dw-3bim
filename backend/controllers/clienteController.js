@@ -22,8 +22,9 @@ exports.listarClientes = async (req, res) => {
 // Em clienteController.js
 
 exports.criarCliente = async (req, res) => {
+  console.log('REQ.BODY:', req.body);
   try {
-    const { cpf } = req.body; // Apenas o CPF é necessário
+    const { cpf } = req.body;
 
     // Validação básica
     if (!cpf) {
@@ -32,46 +33,26 @@ exports.criarCliente = async (req, res) => {
       });
     }
 
-    const result = await query(
-      'INSERT INTO cliente (cpf) VALUES ($1) RETURNING *',
-      [cpf]
-    );
+    let result;
+    if (global.useMockData) {
+      result = await global.mockDatabase.criarCliente({ cpf });
+    } else {
+      result = await query(
+        'INSERT INTO cliente (cpf) VALUES ($1) RETURNING *',
+        [cpf]
+      );
+    }
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Erro ao criar cliente:', error);
 
     // Verifica se é erro de chave primária duplicada (cliente já existe)
-    if (error.code === '23505') { // '23505' é o código de erro para unique_violation
-      return res.status(409).json({ // 409 Conflict é mais apropriado aqui
+    if (error.code === '23505') {
+      return res.status(409).json({
         error: 'Este CPF já está cadastrado como cliente'
       });
     }
-
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-}
-
-exports.criarCliente = async (req, res) => {
-  //  console.log('Criando cliente com dados:', req.body);
-  try {
-    const { cpf, nome_cliente} = req.body;
-
-    // Validação básica
-    if (!nome_cliente) {
-      return res.status(400).json({
-        error: 'Nome do cliente é obrigatório'
-      });
-    }
-
-    const result = await query(
-      'INSERT INTO cliente (cpf) VALUES ($1) RETURNING *',
-      [cpf, nome_cliente]
-    );
-
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error('Erro ao criar cliente:', error);
 
     // Verifica se é erro de violação de constraint NOT NULL
     if (error.code === '23502') {
@@ -175,3 +156,33 @@ exports.deletarCliente = async (req, res) => {
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 }
+
+// Função para obter cliente por CPF da pessoa
+exports.obterClientePorCpf = async (req, res) => {
+  try {
+    const cpf = req.params.cpf;
+
+    if (!cpf) {
+      return res.status(400).json({ error: "CPF é obrigatório" });
+    }
+
+    let result;
+    if (global.useMockData) {
+      result = await global.mockDatabase.obterClientePorCpf(cpf);
+    } else {
+      result = await query(
+        'SELECT * FROM cliente WHERE cpf = $1',
+        [cpf]
+      );
+    }
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Cliente não encontrado" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Erro ao obter cliente por CPF:", error);
+    res.status(500).json({ error: "Erro interno do servidor" });
+  }
+};

@@ -1,5 +1,6 @@
 const { query } = require("../database");
 const path = require("path");
+const fs = require('fs');
 
 exports.abrirCrudProduto = (req, res) => {
   console.log("produtoController - Rota /abrirCrudProduto - abrir o crudProduto");
@@ -9,19 +10,25 @@ exports.abrirCrudProduto = (req, res) => {
 // MODIFICADO: Agora retorna o nome da categoria junto com os dados do produto
 exports.listarProdutos = async (req, res) => {
   try {
-    // JOIN com a tabela categoria para obter o nome da categoria
-    const result = await query(`
-      SELECT 
-        p.id_produto,
-        p.nome_produto,
-        p.preco,
-        p.quantidade_estoque,
-        p.id_categoria,
-        c.nome_categoria
-      FROM produto p
-      INNER JOIN categoria c ON p.id_categoria = c.id_categoria
-      ORDER BY p.id_produto
-    `);
+    let result;
+    if (global.useMockData) {
+      result = await global.mockDatabase.listarProdutos();
+    } else {
+      // LEFT JOIN com a tabela categoria para obter o nome da categoria (inclui produtos sem categoria)
+      result = await query(`
+        SELECT 
+          p.id_produto,
+          p.nome_produto,
+          p.preco,
+          p.quantidade_estoque,
+          p.id_categoria,
+          p.imagem_produto,
+          COALESCE(c.nome_categoria, 'Sem categoria') as nome_categoria
+        FROM produto p
+        LEFT JOIN categoria c ON p.id_categoria = c.id_categoria
+        ORDER BY p.id_produto
+      `);
+    }
     
     res.json(result.rows);
   } catch (error) {
@@ -32,8 +39,10 @@ exports.listarProdutos = async (req, res) => {
 
 exports.criarProduto = async (req, res) => {
   console.log("REQ.BODY:", req.body); // <--- mostra o que chegou do frontend
+  console.log("REQ.FILE:", req.file); // <--- mostra o arquivo enviado
+  
   try {
-    const { id_produto, nome_produto, preco, quantidade_estoque, id_categoria } = req.body;
+    const { nome_produto, preco, quantidade_estoque, id_categoria } = req.body;
 
     // Validação básica
     if (!nome_produto) {
@@ -51,9 +60,26 @@ exports.criarProduto = async (req, res) => {
       return res.status(400).json({ error: "ID da categoria é obrigatório e deve ser um número válido" });
     }
 
+    let imagemProduto = null;
+
+    // Se há arquivo de imagem, processar o upload
+    if (req.file) {
+      // Gerar nome único para a imagem
+      const timestamp = Date.now();
+      const extensao = path.extname(req.file.originalname);
+      const novoNomeArquivo = `produto_${timestamp}${extensao}`;
+      const caminhoAntigo = req.file.path;
+      const caminhoNovo = path.join(__dirname, '../uploads/images', novoNomeArquivo);
+      
+      // Renomear e mover o arquivo
+      fs.renameSync(caminhoAntigo, caminhoNovo);
+      imagemProduto = `/uploads/images/${novoNomeArquivo}`;
+    }
+
+    // Criar produto com imagem
     const result = await query(
-      "INSERT INTO produto (id_produto, nome_produto, preco, quantidade_estoque, id_categoria) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [id_produto, nome_produto, preco, quantidade_estoque, id_categoria]
+      "INSERT INTO produto (nome_produto, preco, quantidade_estoque, id_categoria, imagem_produto) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [nome_produto, preco, quantidade_estoque, id_categoria, imagemProduto]
     );
 
     res.status(201).json(result.rows[0]);
@@ -97,6 +123,8 @@ exports.obterProduto = async (req, res) => {
 
 exports.atualizarProduto = async (req, res) => {
   console.log("REQ.BODY:", req.body); // <--- mostra o que chegou do frontend
+  console.log("REQ.FILE:", req.file); // <--- mostra o arquivo enviado
+  
   try {
     const id = parseInt(req.params.id);
     const { nome_produto, preco, quantidade_estoque, id_categoria } = req.body;
@@ -110,36 +138,60 @@ exports.atualizarProduto = async (req, res) => {
       return res.status(400).json({ error: "ID da categoria é obrigatório e deve ser um número válido" });
     }
 
-    // Verifica se a produto existe
-    const existingPersonResult = await query(
+    // Verifica se o produto existe
+    const existingProductResult = await query(
       "SELECT * FROM produto WHERE id_produto = $1",
       [id]
     );
 
-    if (existingPersonResult.rows.length === 0) {
+    if (existingProductResult.rows.length === 0) {
       return res.status(404).json({ error: "Produto não encontrado" });
     }
 
     // Constrói a query de atualização dinamicamente para campos não nulos
-    const currentPerson = existingPersonResult.rows[0];
+    const currentProduct = existingProductResult.rows[0];
     const updatedFields = {
-      nome_produto: nome_produto !== undefined ? nome_produto : currentPerson.nome_produto,
-      preco: preco !== undefined ? preco : currentPerson.preco,
-      quantidade_estoque: quantidade_estoque !== undefined ? quantidade_estoque : currentPerson.quantidade_estoque,
-      id_categoria: id_categoria !== undefined ? id_categoria : currentPerson.id_categoria,
+      nome_produto: nome_produto !== undefined ? nome_produto : currentProduct.nome_produto,
+      preco: preco !== undefined ? preco : currentProduct.preco,
+      quantidade_estoque: quantidade_estoque !== undefined ? quantidade_estoque : currentProduct.quantidade_estoque,
+      id_categoria: id_categoria !== undefined ? id_categoria : currentProduct.id_categoria,
+      imagem_produto: currentProduct.imagem_produto
     };
 
-    // Atualiza a produto
+    // Se há arquivo de imagem, processar o upload
+    if (req.file) {
+      // Remover imagem antiga se existir
+      if (currentProduct.imagem_produto) {
+        const caminhoImagemAntiga = path.join(__dirname, '..', currentProduct.imagem_produto);
+        if (fs.existsSync(caminhoImagemAntiga)) {
+          fs.unlinkSync(caminhoImagemAntiga);
+        }
+      }
+      
+      // Gerar nome único para a nova imagem
+      const timestamp = Date.now();
+      const extensao = path.extname(req.file.originalname);
+      const novoNomeArquivo = `produto_${id}_${timestamp}${extensao}`;
+      const caminhoAntigo = req.file.path;
+      const caminhoNovo = path.join(__dirname, '../uploads/images', novoNomeArquivo);
+      
+      // Renomear e mover o arquivo
+      fs.renameSync(caminhoAntigo, caminhoNovo);
+      updatedFields.imagem_produto = `/uploads/images/${novoNomeArquivo}`;
+    }
+
+    // Atualiza o produto
     const updateResult = await query(
       `UPDATE produto 
-       SET nome_produto = $1, preco = $2, quantidade_estoque = $3, id_categoria = $4 WHERE id_produto = $5 RETURNING *`,
-      [updatedFields.nome_produto, updatedFields.preco, updatedFields.quantidade_estoque, updatedFields.id_categoria, id]
+       SET nome_produto = $1, preco = $2, quantidade_estoque = $3, id_categoria = $4, imagem_produto = $5 
+       WHERE id_produto = $6 RETURNING *`,
+      [updatedFields.nome_produto, updatedFields.preco, updatedFields.quantidade_estoque, 
+       updatedFields.id_categoria, updatedFields.imagem_produto, id]
     );
 
     res.json(updateResult.rows[0]);
   } catch (error) {
     console.error("Erro ao atualizar produto:", error);
-
     res.status(500).json({ error: "Erro interno do servidor" });
   }
 };

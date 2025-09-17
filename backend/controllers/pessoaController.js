@@ -11,8 +11,12 @@ exports.abrirCrudPessoa = (req, res) => {
 
 exports.listarPessoas = async (req, res) => {
   try {
-    const result = await query('SELECT * FROM pessoa ORDER BY cpf');
-    // console.log('Resultado do SELECT:', result.rows);//verifica se está retornando algo
+    let result;
+    if (global.useMockData) {
+      result = await global.mockDatabase.listarPessoas();
+    } else {
+      result = await query("SELECT * FROM pessoa ORDER BY cpf");
+    }
     res.json(result.rows);
   } catch (error) {
     console.error('Erro ao listar pessoas:', error);
@@ -21,14 +25,13 @@ exports.listarPessoas = async (req, res) => {
 }
 
 exports.criarPessoa = async (req, res) => {
-  //  console.log('Criando pessoa com dados:', req.body);
   try {
     const { cpf, nome_pessoa, email_pessoa, senha_pessoa } = req.body;
 
     // Validação básica
-    if (!nome_pessoa || !email_pessoa || !senha_pessoa) {
+    if (!nome_pessoa || !email_pessoa || !senha_pessoa || !cpf) {
       return res.status(400).json({
-        error: 'Nome, email e senha são obrigatórios'
+        error: 'Nome, email, senha e CPF são obrigatórios'
       });
     }
 
@@ -40,10 +43,27 @@ exports.criarPessoa = async (req, res) => {
       });
     }
 
-    const result = await query(
-      'INSERT INTO pessoa (cpf, nome_pessoa, email_pessoa, senha_pessoa ) VALUES ($1, $2, $3, $4) RETURNING *',
-      [cpf, nome_pessoa, email_pessoa, senha_pessoa]
-    );
+    let result;
+    if (global.useMockData) {
+      // Verificar se email já existe
+      const emailExiste = await global.mockDatabase.verificarEmailExiste(email_pessoa);
+      if (emailExiste.rows.length > 0) {
+        return res.status(400).json({
+          error: 'Email já está em uso'
+        });
+      }
+      
+      result = await global.mockDatabase.criarPessoa({
+        id_pessoa, cpf_pessoa, nome_pessoa, email_pessoa, senha_pessoa
+      });
+    } else {
+      let queryText, queryParams;
+      
+      queryText = 'INSERT INTO pessoa (cpf, nome_pessoa, email_pessoa, senha_pessoa) VALUES ($1, $2, $3, $4) RETURNING *';
+      queryParams = [cpf, nome_pessoa, email_pessoa, senha_pessoa];
+
+      result = await query(queryText, queryParams);
+    }
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -53,6 +73,13 @@ exports.criarPessoa = async (req, res) => {
     if (error.code === '23505' && error.constraint === 'pessoa_email_pessoa_key') {
       return res.status(400).json({
         error: 'Email já está em uso'
+      });
+    }
+
+    // Verifica se é erro de CPF duplicado
+    if (error.code === '23505' && error.constraint === 'pessoa_cpf_pessoa_key') {
+      return res.status(400).json({
+        error: 'CPF já está em uso'
       });
     }
 
@@ -69,16 +96,21 @@ exports.criarPessoa = async (req, res) => {
 
 exports.obterPessoa = async (req, res) => {
   try {
-    const id = req.params.id;
+    const cpf = req.params.id; // Usando id do parâmetro da rota
 
-    if (isNaN(id)) {
-      return res.status(400).json({ error: 'ID deve ser um número válido' });
+    if (!cpf) {
+      return res.status(400).json({ error: 'CPF é obrigatório' });
     }
 
-    const result = await query(
-      'SELECT * FROM pessoa WHERE cpf = $1',
-      [id]
-    );
+    let result;
+    if (global.useMockData) {
+      result = await global.mockDatabase.obterPessoa(cpf);
+    } else {
+      result = await query(
+        'SELECT * FROM pessoa WHERE cpf = $1',
+        [cpf]
+      );
+    }
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Pessoa não encontrada' });
@@ -93,7 +125,7 @@ exports.obterPessoa = async (req, res) => {
 
 exports.atualizarPessoa = async (req, res) => {
   try {
-    const id = req.params.id;
+    const cpf = req.params.id; // Usando id do parâmetro da rota
     const { nome_pessoa, email_pessoa, senha_pessoa } = req.body;
 
     // Validação de email se fornecido
@@ -108,7 +140,7 @@ exports.atualizarPessoa = async (req, res) => {
     // Verifica se a pessoa existe
     const existingPersonResult = await query(
       'SELECT * FROM pessoa WHERE cpf = $1',
-      [id]
+      [cpf]
     );
 
     if (existingPersonResult.rows.length === 0) {
@@ -126,7 +158,7 @@ exports.atualizarPessoa = async (req, res) => {
     // Atualiza a pessoa
     const updateResult = await query(
       'UPDATE pessoa SET nome_pessoa = $1, email_pessoa = $2, senha_pessoa = $3 WHERE cpf = $4 RETURNING *',
-      [updatedFields.nome_pessoa, updatedFields.email_pessoa, updatedFields.senha_pessoa, id]
+      [updatedFields.nome_pessoa, updatedFields.email_pessoa, updatedFields.senha_pessoa, cpf]
     );
 
     res.json(updateResult.rows[0]);
@@ -146,11 +178,11 @@ exports.atualizarPessoa = async (req, res) => {
 
 exports.deletarPessoa = async (req, res) => {
   try {
-    const id = req.params.id;
+    const cpf = req.params.id; // Usando id do parâmetro da rota
     // Verifica se a pessoa existe
     const existingPersonResult = await query(
       'SELECT * FROM pessoa WHERE cpf = $1',
-      [id]
+      [cpf]
     );
 
     if (existingPersonResult.rows.length === 0) {
@@ -160,7 +192,7 @@ exports.deletarPessoa = async (req, res) => {
     // Deleta a pessoa (as constraints CASCADE cuidarão das dependências)
     await query(
       'DELETE FROM pessoa WHERE cpf = $1',
-      [id]
+      [cpf]
     );
 
     res.status(204).send();
@@ -206,11 +238,11 @@ exports.obterPessoaPorEmail = async (req, res) => {
 // Função para atualizar apenas a senha
 exports.atualizarSenha = async (req, res) => {
   try {
-    const id = req.params.id;
+    const cpf = req.params.id; // Usando id do parâmetro da rota
     const { senha_atual, nova_senha } = req.body;
 
-    if (isNaN(id)) {
-      return res.status(400).json({ error: 'ID deve ser um número válido' });
+    if (!cpf) {
+      return res.status(400).json({ error: 'CPF é obrigatório' });
     }
 
     if (!senha_atual || !nova_senha) {
@@ -222,7 +254,7 @@ exports.atualizarSenha = async (req, res) => {
     // Verifica se a pessoa existe e a senha atual está correta
     const personResult = await query(
       'SELECT * FROM pessoa WHERE cpf = $1',
-      [id]
+      [cpf]
     );
 
     if (personResult.rows.length === 0) {
@@ -239,7 +271,7 @@ exports.atualizarSenha = async (req, res) => {
     // Atualiza apenas a senha
     const updateResult = await query(
       'UPDATE pessoa SET senha_pessoa = $1 WHERE cpf = $2 RETURNING cpf, nome_pessoa, email_pessoa',
-      [nova_senha, id]
+      [nova_senha, cpf]
     );
 
     res.json(updateResult.rows[0]);

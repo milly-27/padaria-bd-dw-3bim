@@ -14,6 +14,8 @@ const btnCancelar = document.getElementById('btnCancelar');
 const btnSalvar = document.getElementById('btnSalvar');
 const produtosTableBody = document.getElementById('produtosTableBody');
 const messageContainer = document.getElementById('messageContainer');
+const imagemInput = document.getElementById('imagem');
+const imagemPreview = document.getElementById('imagemPreview');
 
 // Carregar lista de produtos ao inicializar
 document.addEventListener('DOMContentLoaded', () => {
@@ -28,6 +30,20 @@ btnAlterar.addEventListener('click', alterarProduto);
 btnExcluir.addEventListener('click', excluirProduto);
 btnCancelar.addEventListener('click', cancelarOperacao);
 btnSalvar.addEventListener('click', salvarOperacao);
+
+// Event listener para preview da imagem
+imagemInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imagemPreview.innerHTML = `<img src="${e.target.result}" alt="Preview da imagem">`;
+        };
+        reader.readAsDataURL(file);
+    } else {
+        imagemPreview.innerHTML = '';
+    }
+});
 
 mostrarBotoes(true, false, false, false, false, false);// mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)
 bloquearCampos(false);//libera pk e bloqueia os demais campos
@@ -56,8 +72,9 @@ function bloquearCampos(bloquearPrimeiro) {
 // Função para limpar formulário
 function limparFormulario() {
     form.reset();
+    currentPersonId = null;
+    imagemPreview.innerHTML = '';
 }
-
 
 function mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar) {
     btnBuscar.style.display = btBuscar ? 'inline-block' : 'none';
@@ -125,6 +142,13 @@ function preencherFormulario(produto) {
     document.getElementById('preco').value = produto.preco || '';
     document.getElementById('quantidade_estoque').value = produto.quantidade_estoque || '';
     document.getElementById('id_categoria').value = produto.id_categoria || '';
+    
+    // Exibir imagem se existir
+    if (produto.imagem_path) {
+        imagemPreview.innerHTML = `<img src="${produto.imagem_path}" alt="Imagem do produto">`;
+    } else {
+        imagemPreview.innerHTML = '';
+    }
 }  
 
 
@@ -178,47 +202,38 @@ async function excluirProduto() {
 async function salvarOperacao() {
     console.log('Operação:', operacao + ' - currentPersonId: ' + currentPersonId + ' - searchId: ' + searchId.value);
 
-    // CORREÇÃO: Usar FormData para capturar todos os campos do formulário
+    // Usar FormData para capturar todos os campos do formulário incluindo arquivo
     const formData = new FormData(form);
     
-    // CORREÇÃO: Verificar se id_categoria foi selecionado
+    // Verificar se id_categoria foi selecionado
     const idCategoria = formData.get('id_categoria');
     if (!idCategoria || idCategoria === '') {
         mostrarMensagem('Por favor, selecione uma categoria', 'warning');
         return;
     }
 
-    const produto = {
-        id_produto: searchId.value,
-        nome_produto: formData.get('nome_produto'),
-        preco: Number(formData.get('preco')),
-        quantidade_estoque: Number(formData.get('quantidade_estoque')),
-        id_categoria: Number(idCategoria) // CORREÇÃO: Garantir que seja um número
-    };
+    // Adicionar o ID do produto ao FormData
+    formData.set('id_produto', searchId.value);
     
-    // CORREÇÃO: Log para debug - verificar se id_categoria está sendo capturado
-    console.log('Dados do produto a serem enviados:', produto);
+    // Log para debug
+    console.log('FormData sendo enviado:');
+    for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+    }
     
     let response = null;
     try {
         if (operacao === 'incluir') {
             response = await fetch(`${API_BASE_URL}/produtos`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(produto)
+                body: formData // Enviar FormData diretamente, não JSON
             });
         } else if (operacao === 'alterar') {
             response = await fetch(`${API_BASE_URL}/produtos/${currentPersonId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(produto)
+                body: formData // Enviar FormData diretamente, não JSON
             });
         } else if (operacao === 'excluir') {
-            // console.log('Excluindo produto com ID:', currentPersonId);
             response = await fetch(`${API_BASE_URL}/produtos/${currentPersonId}`, {
                 method: 'DELETE'
             });
@@ -304,6 +319,10 @@ function renderizarTabelaProdutos(produtos) {
 
     produtos.forEach(produto => {
         const row = document.createElement('tr');
+        const imagemHtml = produto.imagem_produto 
+            ? `<img src="${produto.imagem_produto}" alt="Imagem do produto" class="table-image" style="width: 50px; height: 50px; object-fit: cover;">`
+            : 'Sem imagem';
+            
         row.innerHTML = `
             <td>
                 <button class="btn-id" onclick="selecionarProduto(${produto.id_produto})">
@@ -314,6 +333,7 @@ function renderizarTabelaProdutos(produtos) {
             <td>R$ ${Number(produto.preco).toFixed(2)}</td>
             <td>${produto.quantidade_estoque}</td>
             <td>${produto.nome_categoria || 'Categoria não encontrada'}</td>
+            <td>${imagemHtml}</td>
         `;
         produtosTableBody.appendChild(row);
     });

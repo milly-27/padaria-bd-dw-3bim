@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrinho de Compras - Padaria</title>
+    <link rel="stylesheet" href="carrinho.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🛒 Carrinho de Compras</h1>
+            <nav class="nav-buttons">
+                <button onclick="window.location.href='../cardapio/cardapio.html'" class="btn btn-secondary">
+                    ← Voltar ao Cardápio
+                </button>
+                <button onclick="window.location.href='../menu.html'" class="btn btn-secondary">
+                    🏠 Menu Principal
+                </button>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <!-- Mensagens -->
+            <div id="messageContainer"></div>
+
+            <!-- Carrinho vazio -->
+            <div id="carrinhoVazio" class="carrinho-vazio" style="display: none;">
+                <div class="empty-cart-icon">🛒</div>
+                <h2>Seu carrinho está vazio</h2>
+                <p>Adicione produtos do nosso cardápio para começar sua compra!</p>
+                <button onclick="window.location.href='../cardapio/cardapio.html'" class="btn btn-primary">
+                    Ver Cardápio
+                </button>
+            </div>
+
+            <!-- Conteúdo do carrinho -->
+            <div id="carrinhoConteudo" class="carrinho-conteudo">
+                <!-- Lista de itens -->
+                <div class="carrinho-items">
+                    <h2>Itens no Carrinho</h2>
+                    <div id="itensCarrinho" class="itens-lista">
+                        <!-- Itens serão inseridos aqui via JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Resumo do pedido -->
+                <div class="carrinho-resumo">
+                    <div class="resumo-card">
+                        <h3>Resumo do Pedido</h3>
+                        
+                        <div class="resumo-linha">
+                            <span>Subtotal:</span>
+                            <span id="subtotal">R$ 0,00</span>
+                        </div>
+                        
+                        <div class="resumo-linha">
+                            <span>Taxa de entrega:</span>
+                            <span id="taxaEntrega">R$ 5,00</span>
+                        </div>
+                        
+                        <div class="resumo-linha total">
+                            <span>Total:</span>
+                            <span id="total">R$ 5,00</span>
+                        </div>
+
+                        <div class="acoes-carrinho">
+                            <button id="btnLimparCarrinho" class="btn btn-outline">
+                                🗑️ Limpar Carrinho
+                            </button>
+                            <button id="btnFinalizarPedido" class="btn btn-primary">
+                                ✅ Finalizar Pedido
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Informações de entrega -->
+                    <div class="entrega-info">
+                        <h4>📍 Informações de Entrega</h4>
+                        <div class="form-group">
+                            <label for="endereco">Endereço:</label>
+                            <textarea id="endereco" placeholder="Digite seu endereço completo..." rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="observacoes">Observações:</label>
+                            <textarea id="observacoes" placeholder="Observações especiais para o pedido..." rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de confirmação -->
+    <div id="modalConfirmacao" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Confirmar Pedido</h3>
+            <p>Deseja finalizar este pedido?</p>
+            <div class="modal-resumo">
+                <p><strong>Total: <span id="modalTotal">R$ 0,00</span></strong></p>
+                <p><strong>Endereço: <span id="modalEndereco">-</span></strong></p>
+            </div>
+            <div class="modal-actions">
+                <button id="btnCancelarModal" class="btn btn-outline">Cancelar</button>
+                <button id="btnConfirmarPedido" class="btn btn-primary">Confirmar Pedido</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="carrinho.js"></script>
+</body>
+</html>

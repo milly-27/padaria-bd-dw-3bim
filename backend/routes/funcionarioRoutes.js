@@ -1,16 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const funcionarioController = require('../controllers/funcionarioController');
+const funcionarioController = require('./../controllers/funcionarioController');
 
-// ===================== FUNCIONÁRIO =====================
+// CRUD de Funcionarios
+
+router.get('/abrirCrudFuncionario', funcionarioController.abrirCrudFuncionario);
 router.get('/', funcionarioController.listarFuncionarios);
-router.get('/:cpf', funcionarioController.obterFuncionario);
 router.post('/', funcionarioController.criarFuncionario);
-router.put('/:cpf', funcionarioController.atualizarFuncionario);
-router.delete('/:cpf', funcionarioController.excluirFuncionario);
-
-// ===================== FUNCIONARIO =====================
-router.get('/funcionarios/listar', funcionarioController.listarFuncionarios);
-router.post('/funcionarios', funcionarioController.criarFuncionario);
+router.get('/pessoa/:cpf', funcionarioController.obterFuncionarioPorCpf);
+router.get('/:id', funcionarioController.obterFuncionario);
+router.put('/:id', funcionarioController.atualizarFuncionario);
+router.delete('/:id', funcionarioController.deletarFuncionario);
 
 module.exports = router;

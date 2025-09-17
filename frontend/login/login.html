@@ -1,130 +1,42 @@
 <!DOCTYPE html>
-<html lang="pt-br">
-
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Avap - Login</title>
-  <style>
-    body {
-      background: linear-gradient(135deg, #4facfe, #00f2fe);
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: Arial, sans-serif;
-    }
-
-    #loginBox {
-      background: #fff;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      width: 300px;
-      text-align: center;
-      animation: fadeIn 0.5s ease-in-out;
-    }
-
-    h2 {
-      margin-bottom: 20px;
-      color: #333;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-    }
-
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      background: #4facfe;
-      border: none;
-      border-radius: 6px;
-      color: white;
-      font-size: 15px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    button:hover {
-      background: #3c8efc;
-    }
-
-    p#mensagem {
-      margin-top: 10px;
-      font-size: 14px;
-      color: red;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema Padaria</title>
+    <link rel="stylesheet" href="login.css">
 </head>
-
 <body>
-  <div id="loginBox">
-    <h2>Login</h2>
-    <input type="email" id="email" placeholder="Digite seu e-mail" required />
-    <input type="password" id="senha" placeholder="Digite sua senha" required />
-    <button onclick="fazerLogin()">Entrar</button>
-    <p id="mensagem"></p>
-  </div>
-
-  <script>
-    const API_BASE_URL = 'http://localhost:3001'; // servidor backend
-
-    async function fazerLogin() {
-      const email = document.getElementById("email").value;
-      const senha = document.getElementById("senha").value;
-      const mensagem = document.getElementById("mensagem");
-
-      if (!email || !senha) {
-        mensagem.innerText = "Preencha todos os campos!";
-        return;
-      }
-
-      try {
-        const res = await fetch(`${API_BASE_URL}/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ email, senha })
-        });
-
-        const data = await res.json();
-
-        if (data.status === 'ok') {
-          // salva nome do usuário no localStorage para mostrar no menu
-          localStorage.setItem("usuarioNome", data.nome);
-          window.location.href = "menu.html";
-        } else if (data.status === 'senha_incorreta') {
-          mensagem.innerText = "Senha incorreta!";
-        } else if (data.status === 'nao_encontrado') {
-          alert("Usuário não encontrado. Redirecionando para cadastro...");
-          window.location.href = "cadastro/cadastro.html";
-        } else {
-          mensagem.innerText = "Erro ao fazer login.";
-        }
-
-      } catch (err) {
-        mensagem.innerText = "Erro de conexão com servidor.";
-        console.error(err);
-      }
-    }
-  </script>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>🥖 Padaria</h1>
+                <h2>Entrar na sua conta</h2>
+            </div>
+            
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required placeholder="Digite seu email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="senha">Senha:</label>
+                    <input type="password" id="senha" name="senha" required placeholder="Digite sua senha">
+                </div>
+                
+                <button type="submit" class="btn-login">Entrar</button>
+            </form>
+            
+            <div class="login-footer">
+                <p>Não tem uma conta? <a href="cadastro.html">Cadastre-se aqui</a></p>
+                <p><a href="../menu.html">Voltar ao Menu</a></p>
+            </div>
+            
+            <div id="messageContainer"></div>
+        </div>
+    </div>
+    
+    <script src="login.js"></script>
 </body>
-
 </html>
