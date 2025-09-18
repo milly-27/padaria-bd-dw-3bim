@@ -114,7 +114,7 @@ const produtoRoutes = require('./routes/produtoRoutes');
 app.use('/produtos', produtoRoutes);
 
 const loginRoutes = require('./routes/loginRoutes'); 
-app.use('/', loginRoutes); // Usando suas rotas
+app.use('/', loginRoutes);
 
 const funcionarioRoutes = require('./routes/funcionarioRoutes');
 app.use('/funcionarios', funcionarioRoutes);
@@ -125,8 +125,8 @@ app.use('/clientes', clienteRoutes);
 const cardapioRoutes = require('./routes/cardapioRoutes');
 app.use('/cardapio', cardapioRoutes);
 
-const authRoutes = require('./routes/authRoutes');
-app.use('/auth', authRoutes);
+//const authRoutes = require('./routes/authRoutes');
+//app.use('/auth', authRoutes);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Rota padrão

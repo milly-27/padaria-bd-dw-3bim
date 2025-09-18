@@ -2,18 +2,13 @@ const express = require('express');
 const router = express.Router();
 const loginController = require('../controllers/loginController');
 
-// --- Rotas de Autenticação ---
-// Rota principal para realizar o login
+// Rota para login
 router.post('/login', loginController.login);
 
-// Rota para verificar se o usuário já tem uma sessão ativa (cookie)
-router.get('/verificaSeUsuarioEstaLogado', loginController.verificaSeUsuarioEstaLogado);
+// Rota para verificar se está logado
+router.get('/verificar-login', loginController.verificarLogin);
 
-// --- Rotas de CRUD para 'pessoa' ---
-router.get('/', loginController.listarPessoas);
-router.post('/', loginController.criarPessoa);
-router.get('/:id', loginController.obterPessoa);
-// router.put('/:id', loginController.atualizarPessoa);
-// router.delete('/:id', loginController.deletarPessoa);
+// Rota para logout
+router.post('/logout', loginController.logout);
 
 module.exports = router;
