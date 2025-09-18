@@ -1,41 +1,77 @@
 // Configuração da API
-const API_BASE_URL = 'http://localhost:3001';
+const API_BASE_URL = 'http://localhost:3001/api';
 
 // Elementos do DOM
 const carrinhoVazio = document.getElementById('carrinhoVazio');
 const carrinhoConteudo = document.getElementById('carrinhoConteudo');
 const itensCarrinho = document.getElementById('itensCarrinho');
 const subtotalElement = document.getElementById('subtotal');
-const taxaEntregaElement = document.getElementById('taxaEntrega');
 const totalElement = document.getElementById('total');
 const messageContainer = document.getElementById('messageContainer');
 const btnLimparCarrinho = document.getElementById('btnLimparCarrinho');
-const btnFinalizarPedido = document.getElementById('btnFinalizarPedido');
-const enderecoInput = document.getElementById('endereco');
+const btnCriarPedido = document.getElementById('btnCriarPedido');
+
+// Inputs do formulário
+const cpfInput = document.getElementById('cpf');
+const formaPagamentoSelect = document.getElementById('formaPagamento');
 const observacoesInput = document.getElementById('observacoes');
 
-// Modal
-const modalConfirmacao = document.getElementById('modalConfirmacao');
+// Modais
+const modalConfirmacaoPedido = document.getElementById('modalConfirmacaoPedido');
+const modalPagamento = document.getElementById('modalPagamento');
+const modalSucesso = document.getElementById('modalSucesso');
+
+// Elementos dos modais
+const modalCpf = document.getElementById('modalCpf');
 const modalTotal = document.getElementById('modalTotal');
-const modalEndereco = document.getElementById('modalEndereco');
-const btnCancelarModal = document.getElementById('btnCancelarModal');
+const modalFormaPagamento = document.getElementById('modalFormaPagamento');
+const btnCancelarModalPedido = document.getElementById('btnCancelarModalPedido');
 const btnConfirmarPedido = document.getElementById('btnConfirmarPedido');
+
+const numeroPedido = document.getElementById('numeroPedido');
+const totalPagar = document.getElementById('totalPagar');
+const formaPagamentoEscolhida = document.getElementById('formaPagamentoEscolhida');
+const btnCancelarPagamento = document.getElementById('btnCancelarPagamento');
+const btnFinalizarPagamento = document.getElementById('btnFinalizarPagamento');
+
+const pedidoFinalizado = document.getElementById('pedidoFinalizado');
+const btnVoltarCardapio = document.getElementById('btnVoltarCardapio');
 
 // Variáveis globais
 let carrinho = [];
-const TAXA_ENTREGA = 5.00;
+let pedidoAtual = null;
+let formasPagamento = [];
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => {
     carregarCarrinho();
+    carregarFormasPagamento();
     atualizarInterface();
+    configurarEventListeners();
 });
 
 // Event Listeners
-btnLimparCarrinho.addEventListener('click', limparCarrinho);
-btnFinalizarPedido.addEventListener('click', abrirModalConfirmacao);
-btnCancelarModal.addEventListener('click', fecharModal);
-btnConfirmarPedido.addEventListener('click', finalizarPedido);
+function configurarEventListeners() {
+    btnLimparCarrinho.addEventListener('click', limparCarrinho);
+    btnCriarPedido.addEventListener('click', abrirModalConfirmacaoPedido);
+    btnCancelarModalPedido.addEventListener('click', () => fecharModal('modalConfirmacaoPedido'));
+    btnConfirmarPedido.addEventListener('click', criarPedido);
+    btnCancelarPagamento.addEventListener('click', () => fecharModal('modalPagamento'));
+    btnFinalizarPagamento.addEventListener('click', finalizarPagamento);
+    btnVoltarCardapio.addEventListener('click', () => window.location.href = '../cardapio/cardapio.html');
+    
+    // Máscara para CPF
+    cpfInput.addEventListener('input', aplicarMascaraCPF);
+}
+
+// Função para aplicar máscara no CPF
+function aplicarMascaraCPF(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+    value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    e.target.value = value;
+}
 
 // Função para mostrar mensagens
 function mostrarMensagem(texto, tipo = 'info') {
@@ -43,6 +79,29 @@ function mostrarMensagem(texto, tipo = 'info') {
     setTimeout(() => {
         messageContainer.innerHTML = '';
     }, 4000);
+}
+
+// Função para carregar formas de pagamento do banco
+async function carregarFormasPagamento() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/formas-pagamento`);
+        if (!response.ok) throw new Error('Erro ao carregar formas de pagamento');
+        
+        formasPagamento = await response.json();
+        
+        // Limpar e popular o select
+        formaPagamentoSelect.innerHTML = '<option value="">Selecione uma forma de pagamento</option>';
+        formasPagamento.forEach(forma => {
+            const option = document.createElement('option');
+            option.value = forma.id_forma_pagamento;
+            option.textContent = forma.nome_forma;
+            formaPagamentoSelect.appendChild(option);
+        });
+        
+    } catch (error) {
+        console.error('Erro ao carregar formas de pagamento:', error);
+        formaPagamentoSelect.innerHTML = '<option value="">Erro ao carregar formas de pagamento</option>';
+    }
 }
 
 // Função para carregar carrinho do localStorage
@@ -131,9 +190,9 @@ function calcularSubtotal() {
     return carrinho.reduce((total, item) => total + (item.preco * item.quantidade), 0);
 }
 
-// Função para calcular total
+// Função para calcular total (sem taxa de entrega)
 function calcularTotal() {
-    return calcularSubtotal() + TAXA_ENTREGA;
+    return calcularSubtotal();
 }
 
 // Função para atualizar interface
@@ -199,82 +258,193 @@ function atualizarResumo() {
     const total = calcularTotal();
     
     subtotalElement.textContent = `R$ ${subtotal.toFixed(2)}`;
-    taxaEntregaElement.textContent = `R$ ${TAXA_ENTREGA.toFixed(2)}`;
     totalElement.textContent = `R$ ${total.toFixed(2)}`;
 }
 
-// Função para abrir modal de confirmação
-function abrirModalConfirmacao() {
+// Função para validar CPF
+function validarCPF(cpf) {
+    cpf = cpf.replace(/\D/g, '');
+    if (cpf.length !== 11) return false;
+    
+    // Verificar se todos os dígitos são iguais
+    if (/^(\d)\1{10}$/.test(cpf)) return false;
+    
+    // Validar dígitos verificadores
+    let soma = 0;
+    for (let i = 0; i < 9; i++) {
+        soma += parseInt(cpf.charAt(i)) * (10 - i);
+    }
+    let resto = 11 - (soma % 11);
+    if (resto === 10 || resto === 11) resto = 0;
+    if (resto !== parseInt(cpf.charAt(9))) return false;
+    
+    soma = 0;
+    for (let i = 0; i < 10; i++) {
+        soma += parseInt(cpf.charAt(i)) * (11 - i);
+    }
+    resto = 11 - (soma % 11);
+    if (resto === 10 || resto === 11) resto = 0;
+    if (resto !== parseInt(cpf.charAt(10))) return false;
+    
+    return true;
+}
+
+// Função para abrir modal de confirmação do pedido
+function abrirModalConfirmacaoPedido() {
     if (carrinho.length === 0) {
-        mostrarMensagem('Adicione itens ao carrinho antes de finalizar o pedido!', 'warning');
+        mostrarMensagem('Adicione itens ao carrinho antes de criar o pedido!', 'warning');
         return;
     }
     
-    const endereco = enderecoInput.value.trim();
-    if (!endereco) {
-        mostrarMensagem('Por favor, informe o endereço de entrega!', 'warning');
-        enderecoInput.focus();
+    const cpf = cpfInput.value.trim();
+    if (!cpf) {
+        mostrarMensagem('Por favor, informe o CPF do cliente!', 'warning');
+        cpfInput.focus();
         return;
     }
     
+    if (!validarCPF(cpf)) {
+        mostrarMensagem('CPF inválido!', 'warning');
+        cpfInput.focus();
+        return;
+    }
+    
+    const formaPagamentoId = formaPagamentoSelect.value;
+    if (!formaPagamentoId) {
+        mostrarMensagem('Por favor, selecione uma forma de pagamento!', 'warning');
+        formaPagamentoSelect.focus();
+        return;
+    }
+    
+    const formaPagamentoNome = formasPagamento.find(f => f.id_forma_pagamento == formaPagamentoId)?.nome_forma || '';
     const total = calcularTotal();
+    
+    modalCpf.textContent = cpf;
     modalTotal.textContent = `R$ ${total.toFixed(2)}`;
-    modalEndereco.textContent = endereco;
-    modalConfirmacao.style.display = 'flex';
+    modalFormaPagamento.textContent = formaPagamentoNome;
+    modalConfirmacaoPedido.style.display = 'flex';
 }
 
 // Função para fechar modal
-function fecharModal() {
-    modalConfirmacao.style.display = 'none';
+function fecharModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
 }
 
-// Função para finalizar pedido
-async function finalizarPedido() {
+// ======= AJUSTE AQUI: criarPedido sem enviar itens ainda =======
+async function criarPedido() {
     try {
-        const endereco = enderecoInput.value.trim();
+        const cpf = cpfInput.value.replace(/\D/g, '');
         const observacoes = observacoesInput.value.trim();
-        
-        const pedido = {
-            itens: carrinho,
-            endereco: endereco,
+        const formaPagamentoId = formaPagamentoSelect.value;
+
+        const dadosPedido = {
+            cpf: cpf,
             observacoes: observacoes,
-            subtotal: calcularSubtotal(),
-            taxa_entrega: TAXA_ENTREGA,
-            total: calcularTotal(),
-            data_pedido: new Date().toISOString()
+            valor_total: calcularTotal()
         };
-        
-        // Aqui você pode implementar a chamada para a API para salvar o pedido
-        console.log('Pedido a ser enviado:', pedido);
-        
-        // Simular sucesso (substitua pela chamada real da API)
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Limpar carrinho após sucesso
+
+        const response = await fetch(`${API_BASE_URL}/pedidos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dadosPedido)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Erro ao criar pedido');
+        }
+
+        const resultado = await response.json();
+        pedidoAtual = resultado; // guarda o pedido criado
+
+        // Fechar modal de confirmação
+        fecharModal('modalConfirmacaoPedido');
+
+        // Abrir modal de pagamento
+        const formaPagamentoNome = formasPagamento.find(f => f.id_forma_pagamento == formaPagamentoId)?.nome_forma || '';
+        numeroPedido.textContent = resultado.id_pedido;
+        totalPagar.textContent = `R$ ${calcularTotal().toFixed(2)}`;
+        formaPagamentoEscolhida.textContent = formaPagamentoNome;
+        modalPagamento.style.display = 'flex';
+
+        mostrarMensagem('Pedido criado com sucesso! Agora finalize o pagamento.', 'success');
+
+    } catch (error) {
+        console.error('Erro ao criar pedido:', error);
+        mostrarMensagem(error.message || 'Erro ao criar pedido. Tente novamente.', 'error');
+    }
+}
+
+// ======= AJUSTE AQUI: finalizarPagamento envia itens e pagamento =======
+async function finalizarPagamento() {
+    try {
+        if (!pedidoAtual) throw new Error('Nenhum pedido encontrado');
+
+        const formaPagamentoId = formaPagamentoSelect.value;
+
+        // 1️⃣ Enviar pedidoproduto
+        const itensPedido = carrinho.map(item => ({
+            id_pedido: pedidoAtual.id_pedido,
+            id_produto: item.id_produto,
+            quantidade: item.quantidade,
+            preco_unitario: item.preco
+        }));
+
+        const responseItens = await fetch(`${API_BASE_URL}/pedidoproduto`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(itensPedido)
+        });
+
+        if (!responseItens.ok) {
+            const errorData = await responseItens.json();
+            throw new Error(errorData.message || 'Erro ao enviar itens do pedido');
+        }
+
+        // 2️⃣ Enviar pagamento
+        const dadosPagamento = {
+            id_pedido: pedidoAtual.id_pedido,
+            id_forma_pagamento: formaPagamentoId,
+            valor_total: calcularTotal()
+        };
+
+        const responsePagamento = await fetch(`${API_BASE_URL}/pagamentos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dadosPagamento)
+        });
+
+        if (!responsePagamento.ok) {
+            const errorData = await responsePagamento.json();
+            throw new Error(errorData.message || 'Erro ao processar pagamento');
+        }
+
+        // 3️⃣ Limpar carrinho
         carrinho = [];
         salvarCarrinho();
-        
-        // Fechar modal
-        fecharModal();
-        
+
         // Limpar formulário
-        enderecoInput.value = '';
+        cpfInput.value = '';
         observacoesInput.value = '';
-        
+        formaPagamentoSelect.selectedIndex = 0;
+
+        // Fechar modal de pagamento
+        fecharModal('modalPagamento');
+
+        // Mostrar modal de sucesso
+        pedidoFinalizado.textContent = pedidoAtual.id_pedido;
+        modalSucesso.style.display = 'flex';
+
         // Atualizar interface
         atualizarInterface();
-        
-        // Mostrar mensagem de sucesso
-        mostrarMensagem('Pedido realizado com sucesso! Em breve entraremos em contato.', 'success');
-        
-        // Opcional: redirecionar após alguns segundos
-        setTimeout(() => {
-            window.location.href = '../cardapio/cardapio.html';
-        }, 3000);
-        
+        mostrarMensagem('Pagamento processado com sucesso!', 'success');
+
+        // Resetar pedidoAtual
+        pedidoAtual = null;
+
     } catch (error) {
-        console.error('Erro ao finalizar pedido:', error);
-        mostrarMensagem('Erro ao finalizar pedido. Tente novamente.', 'error');
+        console.error('Erro ao finalizar pagamento:', error);
+        mostrarMensagem(error.message || 'Erro ao processar pagamento. Tente novamente.', 'error');
     }
 }
 
