@@ -130,10 +130,16 @@ app.use('/cardapio', cardapioRoutes);
 
 // No seu arquivo principal (app.js ou server.js)
 const pedidoRoutes = require('./routes/pedidoRoutes');
-app.use('/pedidos', pedidoRoutes); //
+app.use('/pedidos', pedidoRoutes); 
 
 const pedidoProdutoRoutes = require('./routes/pedidoProdutoRoutes');
-app.use('/pedidoProdutos', pedidoRoutes); // <--- O problema está aqui
+app.use('/pedidoProdutos', pedidoProdutoRoutes); 
+
+const pagamentoRoutes = require('./routes/pagamentoRoutes');
+app.use('/pagamento', pagamentoRoutes); 
+
+const forma_pagamentoRoutes = require('./routes/forma_pagamentoRoutes');
+app.use('/forma_pagamentos', forma_pagamentoRoutes);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Rota padrão
