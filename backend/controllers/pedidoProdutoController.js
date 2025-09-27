@@ -19,10 +19,21 @@ exports.listar = async (req, res) => {
 // Criar
 exports.criar = async (req, res) => {
   try {
-    const { id_pedido, id_produto, quantidade, preco_unitario } = req.body;
+    let { id_pedido, id_produto, quantidade, preco_unitario } = req.body;
 
-    if (!id_pedido || !id_produto || !quantidade || !preco_unitario) {
-      return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
+    // Converte valores
+    id_pedido = parseInt(id_pedido, 10);
+    id_produto = parseInt(id_produto, 10);
+    quantidade = parseInt(quantidade, 10);
+    preco_unitario = parseFloat(preco_unitario);
+
+    if (
+      isNaN(id_pedido) ||
+      isNaN(id_produto) ||
+      isNaN(quantidade) ||
+      isNaN(preco_unitario)
+    ) {
+      return res.status(400).json({ error: 'Todos os campos devem ser preenchidos corretamente' });
     }
 
     const result = await query(
@@ -41,7 +52,15 @@ exports.criar = async (req, res) => {
 // Obter
 exports.obter = async (req, res) => {
   try {
-    const { id_pedido, id_produto } = req.params;
+    let { id_pedido, id_produto } = req.params;
+
+    id_pedido = parseInt(id_pedido, 10);
+    id_produto = parseInt(id_produto, 10);
+
+    if (isNaN(id_pedido) || isNaN(id_produto)) {
+      return res.status(400).json({ error: 'IDs inválidos. Devem ser números.' });
+    }
+
     const result = await query(
       'SELECT * FROM pedidoproduto WHERE id_pedido = $1 AND id_produto = $2',
       [id_pedido, id_produto]
@@ -61,8 +80,22 @@ exports.obter = async (req, res) => {
 // Atualizar
 exports.atualizar = async (req, res) => {
   try {
-    const { id_pedido, id_produto } = req.params;
-    const { quantidade, preco_unitario } = req.body;
+    let { id_pedido, id_produto } = req.params;
+    let { quantidade, preco_unitario } = req.body;
+
+    id_pedido = parseInt(id_pedido, 10);
+    id_produto = parseInt(id_produto, 10);
+    quantidade = parseInt(quantidade, 10);
+    preco_unitario = parseFloat(preco_unitario);
+
+    if (
+      isNaN(id_pedido) ||
+      isNaN(id_produto) ||
+      isNaN(quantidade) ||
+      isNaN(preco_unitario)
+    ) {
+      return res.status(400).json({ error: 'Dados inválidos. Todos os campos devem ser numéricos.' });
+    }
 
     const result = await query(
       `UPDATE pedidoproduto
@@ -86,7 +119,15 @@ exports.atualizar = async (req, res) => {
 // Deletar
 exports.deletar = async (req, res) => {
   try {
-    const { id_pedido, id_produto } = req.params;
+    let { id_pedido, id_produto } = req.params;
+
+    id_pedido = parseInt(id_pedido, 10);
+    id_produto = parseInt(id_produto, 10);
+
+    if (isNaN(id_pedido) || isNaN(id_produto)) {
+      return res.status(400).json({ error: 'IDs inválidos. Devem ser números.' });
+    }
+
     const result = await query(
       'DELETE FROM pedidoproduto WHERE id_pedido = $1 AND id_produto = $2 RETURNING *',
       [id_pedido, id_produto]

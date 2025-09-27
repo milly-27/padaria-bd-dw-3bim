@@ -1,7 +1,6 @@
-
 // Configuração da API, IP e porta.
 const API_BASE_URL = 'http://localhost:3001';
-let currentPedidoId = null; // Alterado de currentPersonId para currentPedidoId
+let currentPedidoId = null;
 let operacao = null;
 
 // Elementos do DOM
@@ -29,10 +28,10 @@ btnExcluir.addEventListener('click', excluirPedido);
 btnCancelar.addEventListener('click', cancelarOperacao);
 btnSalvar.addEventListener('click', salvarOperacao);
 
-mostrarBotoes(true, false, false, false, false, false);// mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)
-bloquearCampos(false);//libera pk e bloqueia os demais campos
+mostrarBotoes(true, false, false, false, false, false);
+bloquearCampos(false);
 
-// Função para mostrar mensagens
+// Mostrar mensagens
 function mostrarMensagem(texto, tipo = 'info') {
     messageContainer.innerHTML = `<div class="message ${tipo}">${texto}</div>`;
     setTimeout(() => {
@@ -40,26 +39,21 @@ function mostrarMensagem(texto, tipo = 'info') {
     }, 3000);
 }
 
+// Bloquear/desbloquear campos
 function bloquearCampos(bloquearPrimeiro) {
     const inputs = form.querySelectorAll('input, select');
     inputs.forEach((input, index) => {
-        if (index === 0) {
-            // Primeiro elemento (searchId) - bloqueia se bloquearPrimeiro for true, libera se for false
-            input.disabled = bloquearPrimeiro;
-        } else {
-            // Demais elementos - faz o oposto do primeiro
-            input.disabled = !bloquearPrimeiro;
-        }
+        input.disabled = index === 0 ? bloquearPrimeiro : !bloquearPrimeiro;
     });
 }
 
-// Função para limpar formulário
+// Limpar formulário
 function limparFormulario() {
     form.reset();
-    currentPedidoId = null; // Limpa o ID do pedido atual
+    currentPedidoId = null;
 }
 
-
+// Mostrar/ocultar botões
 function mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar) {
     btnBuscar.style.display = btBuscar ? 'inline-block' : 'none';
     btnIncluir.style.display = btIncluir ? 'inline-block' : 'none';
@@ -69,46 +63,40 @@ function mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCa
     btnCancelar.style.display = btCancelar ? 'inline-block' : 'none';
 }
 
-// Função para formatar data para exibição
+// Formatar data
 function formatarData(dataString) {
     if (!dataString) return '';
     const data = new Date(dataString);
     return data.toLocaleDateString('pt-BR');
 }
 
-// Função para converter data para formato ISO (não usada diretamente no formulário, mas útil para o backend)
-function converterDataParaISO(dataString) {
-    if (!dataString) return null;
-    return new Date(dataString).toISOString();
-}
-
-// Função para buscar pedido por ID
+// Buscar pedido
 async function buscarPedido() {
-    const id = searchId.value.trim();
-    if (!id) {
-        mostrarMensagem('Digite um ID para buscar', 'warning');
+    const id = Number(searchId.value.trim());
+
+    if (!id || isNaN(id) || id <= 0) {
+        mostrarMensagem('Digite um ID válido para buscar', 'warning');
         return;
     }
-    
+
     try {
         const response = await fetch(`${API_BASE_URL}/pedidos/${id}`);
 
         if (response.ok) {
             const pedido = await response.json();
             preencherFormulario(pedido);
-            currentPedidoId = pedido.id_pedido; // Armazena o ID do pedido encontrado
-            mostrarBotoes(true, false, true, true, false, true); // btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar
+            currentPedidoId = pedido.id_pedido;
+            mostrarBotoes(true, false, true, true, false, true);
             mostrarMensagem('Pedido encontrado!', 'success');
-            bloquearCampos(true); // Bloqueia todos os campos para visualização
-            searchId.disabled = false; // Mantém o campo de busca habilitado
-
+            bloquearCampos(true);
+            searchId.disabled = false;
         } else if (response.status === 404) {
             limparFormulario();
-            searchId.value = id; // Mantém o ID digitado no campo de busca
-            mostrarBotoes(true, true, false, false, false, true); // btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar
+            searchId.value = id;
+            mostrarBotoes(true, true, false, false, false, true);
             mostrarMensagem('Pedido não encontrado. Você pode incluir um novo pedido.', 'info');
-            bloquearCampos(false); // Libera o campo de busca e bloqueia os demais
-            document.getElementById('cpf').focus(); // Foca no campo CPF para inclusão
+            bloquearCampos(false);
+            document.getElementById('cpf').focus();
         } else {
             throw new Error('Erro ao buscar pedido');
         }
@@ -118,58 +106,55 @@ async function buscarPedido() {
     }
 }
 
-// Função para preencher formulário com dados da pedido
+// Preencher formulário
 function preencherFormulario(pedido) {
     document.getElementById('cpf').value = pedido.cpf || '';
     document.getElementById('data_pedido').value = pedido.data_pedido ? pedido.data_pedido.split('T')[0] : '';
     document.getElementById('valor_total').value = pedido.valor_total || '';
 }
 
-
-// Função para incluir pedido
+// Incluir pedido
 async function incluirPedido() {
     mostrarMensagem('Digite os dados do novo pedido!', 'info');
     limparFormulario();
-    // Se houver um ID no campo de busca, ele pode ser o CPF para o novo pedido
     const cpfFromSearch = searchId.value.trim();
-    if (cpfFromSearch) {
-        document.getElementById('cpf').value = cpfFromSearch;
-    }
-    searchId.value = ''; // Limpa o campo de busca para nova inclusão
-    bloquearCampos(true); // Bloqueia o campo de busca e libera os demais
-    searchId.disabled = true; // Garante que o campo de busca esteja desabilitado
-    mostrarBotoes(false, false, false, false, true, true); // btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar
+    if (cpfFromSearch) document.getElementById('cpf').value = cpfFromSearch;
+    searchId.value = '';
+    bloquearCampos(true);
+    searchId.disabled = true;
+    mostrarBotoes(false, false, false, false, true, true);
     document.getElementById('cpf').focus();
     operacao = 'incluir';
 }
 
-// Função para alterar pedido
+// Alterar pedido
 async function alterarPedido() {
     if (!currentPedidoId) {
         mostrarMensagem('Selecione um pedido para alterar.', 'warning');
         return;
     }
     mostrarMensagem('Altere os dados do pedido!', 'info');
-    bloquearCampos(true); // Bloqueia o campo de busca e libera os demais
-    searchId.disabled = true; // Garante que o campo de busca esteja desabilitado
-    mostrarBotoes(false, false, false, false, true, true); // btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar
+    bloquearCampos(true);
+    searchId.disabled = true;
+    mostrarBotoes(false, false, false, false, true, true);
     document.getElementById('cpf').focus();
     operacao = 'alterar';
 }
 
-// Função para excluir pedido
+// Excluir pedido
 async function excluirPedido() {
     if (!currentPedidoId) {
         mostrarMensagem('Selecione um pedido para excluir.', 'warning');
         return;
     }
     mostrarMensagem('Confirme a exclusão salvando...', 'warning');
-    bloquearCampos(true); // Bloqueia todos os campos, exceto o de busca
-    searchId.disabled = true; // Garante que o campo de busca esteja desabilitado
-    mostrarBotoes(false, false, false, false, true, true); // btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar
+    bloquearCampos(true);
+    searchId.disabled = true;
+    mostrarBotoes(false, false, false, false, true, true);
     operacao = 'excluir';
 }
 
+// Salvar operação
 async function salvarOperacao() {
     if (!operacao) {
         mostrarMensagem('Nenhuma operação selecionada!', 'warning');
@@ -180,13 +165,12 @@ async function salvarOperacao() {
     const pedido = {
         cpf: formData.get('cpf'),
         data_pedido: formData.get('data_pedido'),
-        valor_total: parseFloat(formData.get('valor_total')) || 0, // Garante que é um número
-        itens: [] // Assumindo que itens serão gerenciados separadamente ou não são parte deste formulário simples
+        valor_total: parseFloat(formData.get('valor_total')) || 0,
+        itens: []
     };
 
-    // Validação básica dos campos
     if (!pedido.cpf || !pedido.data_pedido || isNaN(pedido.valor_total)) {
-        mostrarMensagem('Preencha todos os campos obrigatórios (CPF, Data do Pedido, Valor Total).', 'error');
+        mostrarMensagem('Preencha CPF, Data do Pedido e Valor Total.', 'error');
         return;
     }
 
@@ -195,26 +179,22 @@ async function salvarOperacao() {
         if (operacao === 'incluir') {
             response = await fetch(`${API_BASE_URL}/pedidos`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(pedido)
             });
         } else if (operacao === 'alterar') {
-            if (!currentPedidoId) {
-                mostrarMensagem('ID do pedido não encontrado para alteração.', 'error');
+            if (!currentPedidoId || isNaN(currentPedidoId)) {
+                mostrarMensagem('ID do pedido inválido para alteração.', 'error');
                 return;
             }
             response = await fetch(`${API_BASE_URL}/pedidos/${currentPedidoId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(pedido)
             });
         } else if (operacao === 'excluir') {
-            if (!currentPedidoId) {
-                mostrarMensagem('ID do pedido não encontrado para exclusão.', 'error');
+            if (!currentPedidoId || isNaN(currentPedidoId)) {
+                mostrarMensagem('ID do pedido inválido para exclusão.', 'error');
                 return;
             }
             response = await fetch(`${API_BASE_URL}/pedidos/${currentPedidoId}`, {
@@ -237,21 +217,21 @@ async function salvarOperacao() {
         mostrarMensagem(`Erro ao ${operacao} pedido.`, 'error');
     }
 
-    cancelarOperacao(); // Reseta o estado da interface após salvar
+    cancelarOperacao();
 }
 
-// Função para cancelar operação
+// Cancelar operação
 function cancelarOperacao() {
     limparFormulario();
-    mostrarBotoes(true, false, false, false, false, false); // btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar
-    bloquearCampos(false); // Libera o campo de busca e bloqueia os demais
-    searchId.disabled = false; // Garante que o campo de busca esteja habilitado
+    mostrarBotoes(true, false, false, false, false, false);
+    bloquearCampos(false);
+    searchId.disabled = false;
     searchId.focus();
-    operacao = null; // Reseta a operação
+    operacao = null;
     mostrarMensagem('Operação cancelada', 'info');
 }
 
-// Função para carregar lista de pedidos
+// Carregar lista de pedidos
 async function carregarPedidos() {
     try {
         const response = await fetch(`${API_BASE_URL}/pedidos`);
@@ -267,31 +247,32 @@ async function carregarPedidos() {
     }
 }
 
-// Função para renderizar tabela de pedidos
+// Renderizar tabela
 function renderizarTabelaPedidos(pedidos) {
     pedidosTableBody.innerHTML = '';
-
     pedidos.forEach(pedido => {
         const row = document.createElement('tr');
         row.innerHTML = `
-                    <td>
-                        <button class="btn-id" onclick="selecionarPedido(${pedido.id_pedido})">
-                            ${pedido.id_pedido}
-                        </button>
-                    </td>
-                    <td>${pedido.cpf}</td>
-                    <td>${pedido.cliente || 'N/A'}</td> <!-- Exibe o nome do cliente -->
-                    <td>${formatarData(pedido.data_pedido)}</td>
-                    <td>${parseFloat(pedido.valor_total).toFixed(2)}</td>                 
-                `;
+            <td>
+                <button class="btn-id" onclick="selecionarPedido(${pedido.id_pedido})">
+                    ${pedido.id_pedido}
+                </button>
+            </td>
+            <td>${pedido.cpf}</td>
+            <td>${pedido.cliente || 'N/A'}</td>
+            <td>${formatarData(pedido.data_pedido)}</td>
+            <td>${parseFloat(pedido.valor_total).toFixed(2)}</td>                 
+        `;
         pedidosTableBody.appendChild(row);
     });
 }
 
-// Função para selecionar pedido da tabela
+// Selecionar pedido
 async function selecionarPedido(id) {
+    if (!id || isNaN(id)) {
+        mostrarMensagem('ID inválido ao selecionar pedido.', 'error');
+        return;
+    }
     searchId.value = id;
     await buscarPedido();
 }
-
-

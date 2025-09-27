@@ -1,4 +1,3 @@
-
 const db = require("../database.js");
 const path = require("path");
 
@@ -28,11 +27,10 @@ exports.criarPedido = async (req, res) => {
   try {
     const { cpf, data_pedido, valor_total, itens } = req.body;
 
-    if (!cpf || !data_pedido || !valor_total || !Array.isArray(itens)) {
+    if (!cpf || !data_pedido || valor_total === undefined || !Array.isArray(itens)) {
       return res.status(400).json({ error: "Dados do pedido incompletos" });
     }
 
-    // Cria pedido
     const pedidoResult = await db.query(
       "INSERT INTO pedido (cpf, data_pedido, valor_total) VALUES ($1, $2, $3) RETURNING id_pedido",
       [cpf, data_pedido, valor_total]
@@ -40,7 +38,6 @@ exports.criarPedido = async (req, res) => {
 
     const id_pedido = pedidoResult.rows[0].id_pedido;
 
-    // Insere itens na tabela pedidoproduto
     for (let item of itens) {
       await db.query(
         "INSERT INTO pedidoproduto (id_produto, id_pedido, quantidade, preco_unitario) VALUES ($1, $2, $3, $4)",
@@ -58,7 +55,12 @@ exports.criarPedido = async (req, res) => {
 // Obter pedido por ID
 exports.obterPedido = async (req, res) => {
   try {
-    const id_pedido = parseInt(req.params.id_pedido);
+    const idParam = req.params.id_pedido;
+    const id_pedido = Number(idParam);
+
+    if (!idParam || isNaN(id_pedido) || id_pedido <= 0) {
+      return res.status(400).json({ error: "ID do pedido inválido" });
+    }
 
     const pedidoResult = await db.query(
       "SELECT p.*, pe.nome_pessoa AS cliente_nome FROM pedido p JOIN pessoa pe ON p.cpf = pe.cpf WHERE p.id_pedido = $1",
@@ -86,10 +88,16 @@ exports.obterPedido = async (req, res) => {
   }
 };
 
-// Atualizar pedido (só valor_total e itens, não troca cliente/data)
+// Atualizar pedido
 exports.atualizarPedido = async (req, res) => {
   try {
-    const id_pedido = parseInt(req.params.id_pedido);
+    const idParam = req.params.id_pedido;
+    const id_pedido = Number(idParam);
+
+    if (!idParam || isNaN(id_pedido) || id_pedido <= 0) {
+      return res.status(400).json({ error: "ID do pedido inválido" });
+    }
+
     const { valor_total, itens } = req.body;
 
     await db.query(
@@ -97,10 +105,8 @@ exports.atualizarPedido = async (req, res) => {
       [valor_total, id_pedido]
     );
 
-    // Remove itens antigos
     await db.query("DELETE FROM pedidoproduto WHERE id_pedido = $1", [id_pedido]);
 
-    // Insere itens novos
     for (let item of itens) {
       await db.query(
         "INSERT INTO pedidoproduto (id_produto, id_pedido, quantidade, preco_unitario) VALUES ($1, $2, $3, $4)",
@@ -118,9 +124,17 @@ exports.atualizarPedido = async (req, res) => {
 // Deletar pedido
 exports.deletarPedido = async (req, res) => {
   try {
-    const id_pedido = parseInt(req.params.id_pedido);
+    const idParam = req.params.id_pedido;
+    const id_pedido = Number(idParam);
 
-    const result = await db.query("DELETE FROM pedido WHERE id_pedido = $1 RETURNING *", [id_pedido]);
+    if (!idParam || isNaN(id_pedido) || id_pedido <= 0) {
+      return res.status(400).json({ error: "ID do pedido inválido" });
+    }
+
+    const result = await db.query(
+      "DELETE FROM pedido WHERE id_pedido = $1 RETURNING *",
+      [id_pedido]
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Pedido não encontrado" });
@@ -132,5 +146,3 @@ exports.deletarPedido = async (req, res) => {
     res.status(500).json({ error: "Erro interno do servidor" });
   }
 };
-
-
