@@ -127,6 +127,13 @@ app.use('/cardapio', cardapioRoutes);
 
 //const authRoutes = require('./routes/authRoutes');
 //app.use('/auth', authRoutes);
+
+// No seu arquivo principal (app.js ou server.js)
+const pedidoRoutes = require('./routes/pedidoRoutes');
+app.use('/pedidos', pedidoRoutes); //
+
+const pedidoProdutoRoutes = require('./routes/pedidoProdutoRoutes');
+app.use('/pedidoProdutos', pedidoRoutes); // <--- O problema está aqui
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Rota padrão
