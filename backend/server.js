@@ -140,6 +140,9 @@ app.use('/pagamento', pagamentoRoutes);
 
 const forma_pagamentoRoutes = require('./routes/forma_pagamentoRoutes');
 app.use('/forma_pagamentos', forma_pagamentoRoutes);
+
+const pagamento_has_formapagamentoRoutes = require('./routes/pagamento_has_formapagamentoRoutes');
+app.use('/pagamento_has_formapagamentos', pagamento_has_formapagamentoRoutes);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Rota padrão
