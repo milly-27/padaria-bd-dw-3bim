@@ -3,6 +3,7 @@ const router = express.Router();
 const pagamentoController = require('./../controllers/pagamentoController');
 
 // CRUD de Pagamentos
+
 router.get('/abrirCrudPagamento', pagamentoController.abrirCrudPagamento);
 router.get('/', pagamentoController.listarPagamentos);
 router.post('/', pagamentoController.criarPagamento);
