@@ -1,6 +1,7 @@
+
 // Configuração da API, IP e porta.
 const API_BASE_URL = 'http://localhost:3001';
-let currentPedidoId = null;
+let currentPersonId = null;
 let operacao = null;
 
 // Elementos do DOM
@@ -17,7 +18,7 @@ const messageContainer = document.getElementById('messageContainer');
 
 // Carregar lista de pedidos ao inicializar
 document.addEventListener('DOMContentLoaded', () => {
-    carregarPedidos();
+    // carregarPedidos();
 });
 
 // Event Listeners
@@ -28,10 +29,10 @@ btnExcluir.addEventListener('click', excluirPedido);
 btnCancelar.addEventListener('click', cancelarOperacao);
 btnSalvar.addEventListener('click', salvarOperacao);
 
-mostrarBotoes(true, false, false, false, false, false);
-bloquearCampos(false);
+mostrarBotoes(true, false, false, false, false, false);// mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)
+bloquearCampos(false);//libera pk e bloqueia os demais campos
 
-// Mostrar mensagens
+// Função para mostrar mensagens
 function mostrarMensagem(texto, tipo = 'info') {
     messageContainer.innerHTML = `<div class="message ${tipo}">${texto}</div>`;
     setTimeout(() => {
@@ -39,21 +40,25 @@ function mostrarMensagem(texto, tipo = 'info') {
     }, 3000);
 }
 
-// Bloquear/desbloquear campos
 function bloquearCampos(bloquearPrimeiro) {
     const inputs = form.querySelectorAll('input, select');
     inputs.forEach((input, index) => {
-        input.disabled = index === 0 ? bloquearPrimeiro : !bloquearPrimeiro;
+        if (index === 0) {
+            // Primeiro elemento - bloqueia se bloquearPrimeiro for true, libera se for false
+            input.disabled = bloquearPrimeiro;
+        } else {
+            // Demais elementos - faz o oposto do primeiro
+            input.disabled = !bloquearPrimeiro;
+        }
     });
 }
 
-// Limpar formulário
+// Função para limpar formulário
 function limparFormulario() {
     form.reset();
-    currentPedidoId = null;
 }
 
-// Mostrar/ocultar botões
+
 function mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar) {
     btnBuscar.style.display = btBuscar ? 'inline-block' : 'none';
     btnIncluir.style.display = btIncluir ? 'inline-block' : 'none';
@@ -63,40 +68,47 @@ function mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCa
     btnCancelar.style.display = btCancelar ? 'inline-block' : 'none';
 }
 
-// Formatar data
+// Função para formatar data para exibição
 function formatarData(dataString) {
     if (!dataString) return '';
     const data = new Date(dataString);
     return data.toLocaleDateString('pt-BR');
 }
 
-// Buscar pedido
-async function buscarPedido() {
-    const id = Number(searchId.value.trim());
+// Função para converter data para formato ISO
+function converterDataParaISO(dataString) {
+    if (!dataString) return null;
+    return new Date(dataString).toISOString();
+}
 
-    if (!id || isNaN(id) || id <= 0) {
-        mostrarMensagem('Digite um ID válido para buscar', 'warning');
+// Função para buscar pedido por ID
+async function buscarPedido() {
+    const id = searchId.value.trim();
+    if (!id) {
+        mostrarMensagem('Digite um ID para buscar', 'warning');
         return;
     }
+    bloquearCampos(false);
+    searchId.focus();
 
     try {
-        const response = await fetch(`${API_BASE_URL}/pedidos/${id}`);
+        const response = await fetch(`${API_BASE_URL}/pedido/${id}`);
 
         if (response.ok) {
             const pedido = await response.json();
             preencherFormulario(pedido);
-            currentPedidoId = pedido.id_pedido;
-            mostrarBotoes(true, false, true, true, false, true);
+            mostrarBotoes(true, false, true, true, false, false);
             mostrarMensagem('Pedido encontrado!', 'success');
-            bloquearCampos(true);
-            searchId.disabled = false;
+
+            // Fazer a requisição dos itens separadamente e carregar na tabela
+            await carregarItensDoPedido(pedido.id_pedido);
+
         } else if (response.status === 404) {
             limparFormulario();
             searchId.value = id;
-            mostrarBotoes(true, true, false, false, false, true);
+            mostrarBotoes(true, true, false, false, false, false);
             mostrarMensagem('Pedido não encontrado. Você pode incluir um novo pedido.', 'info');
             bloquearCampos(false);
-            document.getElementById('cpf').focus();
         } else {
             throw new Error('Erro ao buscar pedido');
         }
@@ -106,173 +118,280 @@ async function buscarPedido() {
     }
 }
 
-// Preencher formulário
-function preencherFormulario(pedido) {
-    document.getElementById('cpf').value = pedido.cpf || '';
-    document.getElementById('data_pedido').value = pedido.data_pedido ? pedido.data_pedido.split('T')[0] : '';
-    document.getElementById('valor_total').value = pedido.valor_total || '';
-}
+// Função para carregar itens
+async function carregarItensDoPedido(pedidoId) {
+    try {
+        // debugger;
+        const responseItens = await fetch(`${API_BASE_URL}/pedido_has_produto/${pedidoId}`);
 
-// Incluir pedido
-async function incluirPedido() {
-    mostrarMensagem('Digite os dados do novo pedido!', 'info');
-    limparFormulario();
-    const cpfFromSearch = searchId.value.trim();
-    if (cpfFromSearch) document.getElementById('cpf').value = cpfFromSearch;
-    searchId.value = '';
-    bloquearCampos(true);
-    searchId.disabled = true;
-    mostrarBotoes(false, false, false, false, true, true);
-    document.getElementById('cpf').focus();
-    operacao = 'incluir';
-}
-
-// Alterar pedido
-async function alterarPedido() {
-    if (!currentPedidoId) {
-        mostrarMensagem('Selecione um pedido para alterar.', 'warning');
-        return;
+        if (responseItens.ok) {
+            const itensDoPedido = await responseItens.json();
+            renderizerTabelaItensPedido(itensDoPedido || []);
+        } else if (responseItens.status === 404) {
+            // Silencia completamente o 404 - sem console.log
+            const itensTableBody = document.getElementById('itensTableBody');
+            itensTableBody.innerHTML = '';
+        }
+        // Ignora outros status silenciosamente
+    } catch (error) {
+        // Ignora erros de rede silenciosamente para itens
     }
-    mostrarMensagem('Altere os dados do pedido!', 'info');
+}
+
+function formatarDataParaInputDate(data) {
+    const dataObj = new Date(data); // Converte a data para um objeto Date
+    const ano = dataObj.getFullYear();
+    const mes = String(dataObj.getMonth() + 1).padStart(2, '0'); // Meses começam do zero, então +1
+    const dia = String(dataObj.getDate()).padStart(2, '0'); // Garante que o dia tenha 2 dígitos
+    return `${ano}-${mes}-${dia}`; // Retorna a data no formato yyyy-mm-dd
+}
+
+// Função para preencher formulário com dados da pedido
+function preencherFormulario(pedido) {
+    //  console.log(JSON.stringify(pedido));
+    //  console.log('data pedido: ' + pedido.data_pedido);
+    //  console.log('data pedido formatar: ' + formatarDataParaInputDate(pedido.data_pedido));
+
+    currentPersonId = pedido.id_pedido;
+    searchId.value = pedido.id_pedido;
+    document.getElementById('data_pedido').value = formatarDataParaInputDate(pedido.data_pedido);
+
+    document.getElementById('cliente_pessoa_cpf_pessoa').value = pedido.cliente_pessoa_cpf_pessoa || 0;
+    document.getElementById('funcionario_pessoa_cpf_pessoa').value = pedido.funcionario_pessoa_cpf_pessoa || 0;
+
+
+
+}
+
+
+// Função para incluir pedido
+async function incluirPedido() {
+
+    mostrarMensagem('Digite os dados!', 'success');
+    currentPersonId = searchId.value;
+    // console.log('Incluir novo pedido - currentPersonId: ' + currentPersonId);
+    limparFormulario();
+    searchId.value = currentPersonId;
     bloquearCampos(true);
-    searchId.disabled = true;
-    mostrarBotoes(false, false, false, false, true, true);
-    document.getElementById('cpf').focus();
+
+    mostrarBotoes(false, false, false, false, true, true); // mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)
+    document.getElementById('data_pedido').focus();
+    operacao = 'incluir';
+    // console.log('fim nova pedido - currentPersonId: ' + currentPersonId);
+}
+
+// Função para alterar pedido
+async function alterarPedido() {
+    mostrarMensagem('Digite os dados!', 'success');
+    bloquearCampos(true);
+    mostrarBotoes(false, false, false, false, true, true);// mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)
+    document.getElementById('data_pedido').focus();
     operacao = 'alterar';
 }
 
-// Excluir pedido
+// Função para excluir pedido
 async function excluirPedido() {
-    if (!currentPedidoId) {
-        mostrarMensagem('Selecione um pedido para excluir.', 'warning');
-        return;
-    }
-    mostrarMensagem('Confirme a exclusão salvando...', 'warning');
-    bloquearCampos(true);
+    mostrarMensagem('Excluindo pedido...', 'info');
+    currentPersonId = searchId.value;
+    //bloquear searchId
     searchId.disabled = true;
-    mostrarBotoes(false, false, false, false, true, true);
+    bloquearCampos(false); // libera os demais campos
+    mostrarBotoes(false, false, false, false, true, true);// mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)           
     operacao = 'excluir';
 }
 
-// Salvar operação
 async function salvarOperacao() {
-    if (!operacao) {
-        mostrarMensagem('Nenhuma operação selecionada!', 'warning');
-        return;
-    }
+    console.log('Operação:', operacao + ' - currentPersonId: ' + currentPersonId + ' - searchId: ' + searchId.value);
 
     const formData = new FormData(form);
     const pedido = {
-        cpf: formData.get('cpf'),
+        id_pedido: searchId.value,
         data_pedido: formData.get('data_pedido'),
-        valor_total: parseFloat(formData.get('valor_total')) || 0,
-        itens: []
+        cliente_pessoa_cpf_pessoa: formData.get('cliente_pessoa_cpf_pessoa'),
+        funcionario_pessoa_cpf_pessoa: formData.get('funcionario_pessoa_cpf_pessoa'),
     };
-
-    if (!pedido.cpf || !pedido.data_pedido || isNaN(pedido.valor_total)) {
-        mostrarMensagem('Preencha CPF, Data do Pedido e Valor Total.', 'error');
-        return;
-    }
-
     let response = null;
     try {
         if (operacao === 'incluir') {
-            response = await fetch(`${API_BASE_URL}/pedidos`, {
+            response = await fetch(`${API_BASE_URL}/pedido`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(pedido)
             });
         } else if (operacao === 'alterar') {
-            if (!currentPedidoId || isNaN(currentPedidoId)) {
-                mostrarMensagem('ID do pedido inválido para alteração.', 'error');
-                return;
-            }
-            response = await fetch(`${API_BASE_URL}/pedidos/${currentPedidoId}`, {
+            response = await fetch(`${API_BASE_URL}/pedido/${currentPersonId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(pedido)
             });
         } else if (operacao === 'excluir') {
-            if (!currentPedidoId || isNaN(currentPedidoId)) {
-                mostrarMensagem('ID do pedido inválido para exclusão.', 'error');
-                return;
-            }
-            response = await fetch(`${API_BASE_URL}/pedidos/${currentPedidoId}`, {
+            // console.log('Excluindo pedido com ID:', currentPersonId);
+            response = await fetch(`${API_BASE_URL}/pedido/${currentPersonId}`, {
                 method: 'DELETE'
             });
+            console.log('Pedido excluído' + response.status);
         }
-
-        if (response && response.ok) {
-            mostrarMensagem(`Operação ${operacao} realizada com sucesso!`, 'success');
+        if (response.ok && (operacao === 'incluir' || operacao === 'alterar')) {
+            const novaPedido = await response.json();
+            mostrarMensagem('Operação ' + operacao + ' realizada com sucesso!', 'success');
             limparFormulario();
-            carregarPedidos();
-        } else if (response) {
-            const errorData = await response.json();
-            mostrarMensagem(errorData.error || `Erro ao ${operacao} pedido.`, 'error');
+            //  carregarPedidos();
+
+        } else if (operacao !== 'excluir') {
+            const error = await response.json();
+            mostrarMensagem(error.error || 'Erro ao incluir pedido', 'error');
         } else {
-            mostrarMensagem(`Erro desconhecido ao ${operacao} pedido.`, 'error');
+            mostrarMensagem('Pedido excluído com sucesso!', 'success');
+            limparFormulario();
+            //  carregarPedidos();
         }
     } catch (error) {
         console.error('Erro:', error);
-        mostrarMensagem(`Erro ao ${operacao} pedido.`, 'error');
+        mostrarMensagem('Erro ao incluir ou alterar a pedido', 'error');
     }
 
-    cancelarOperacao();
+    mostrarBotoes(true, false, false, false, false, false);// mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)
+    bloquearCampos(false);//libera pk e bloqueia os demais campos
+    document.getElementById('searchId').focus();
 }
 
-// Cancelar operação
+// Função para cancelar operação
 function cancelarOperacao() {
     limparFormulario();
-    mostrarBotoes(true, false, false, false, false, false);
-    bloquearCampos(false);
-    searchId.disabled = false;
-    searchId.focus();
-    operacao = null;
+    mostrarBotoes(true, false, false, false, false, false);// mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)
+    bloquearCampos(false);//libera pk e bloqueia os demais campos
+    document.getElementById('searchId').focus();
     mostrarMensagem('Operação cancelada', 'info');
 }
 
-// Carregar lista de pedidos
+function renderizerTabelaItensPedido(itens) {
+    const itensTableBody = document.getElementById('itensTableBody');
+    itensTableBody.innerHTML = '';
+
+    // Check if itens is a single object and wrap it in an array
+    if (typeof itens === 'object' && !Array.isArray(itens)) {
+        itens = [itens]; // Wrap the object in an array        
+    }
+
+    // Iterate over the array and render rows
+    itens.forEach((item, index) => {
+        const row = document.createElement('tr');
+        let subTotal = item.quantidade * item.preco_unitario;
+        subTotal = subTotal.toFixed(2).replace('.', ',');
+
+        row.innerHTML = `
+            <td>${item.pedido_id_pedido}</td>                  
+            <td>${item.produto_id_produto}</td>
+            <td>
+                <input type="number" class="quantidade-input" data-index="${index}" 
+                       value="${item.quantidade}" min="1">
+            </td>
+            <td>
+                <input type="number" class="preco-input" data-index="${index}" 
+                       value="${item.preco_unitario}" min="0" step="0.01">
+            </td>                               
+            <td class="subtotal-cell">${subTotal}</td>                  
+        `;
+        itensTableBody.appendChild(row);
+    });
+
+    // Adicionar event listeners para atualizar o subtotal
+    adicionarEventListenersSubtotal();
+}
+
+function adicionarEventListenersSubtotal() {
+    const quantidadeInputs = document.querySelectorAll('.quantidade-input');
+    const precoInputs = document.querySelectorAll('.preco-input');
+
+    // Adicionar event listeners para os inputs de quantidade
+    quantidadeInputs.forEach(input => {
+        input.addEventListener('input', atualizarSubtotal);
+        input.addEventListener('change', atualizarSubtotal);
+    });
+
+    // Adicionar event listeners para os inputs de preço
+    precoInputs.forEach(input => {
+        input.addEventListener('input', atualizarSubtotal);
+        input.addEventListener('change', atualizarSubtotal);
+    });
+}
+
+function atualizarSubtotal(event) {
+    const index = event.target.getAttribute('data-index');
+    const row = event.target.closest('tr');
+
+    const quantidadeInput = row.querySelector('.quantidade-input');
+    const precoInput = row.querySelector('.preco-input');
+    const subtotalCell = row.querySelector('.subtotal-cell');
+
+    // Obter valores atuais (usando parseFloat e fallback para 0 se for inválido)
+    const quantidade = parseFloat(quantidadeInput.value) || 0;
+    const preco = parseFloat(precoInput.value) || 0;
+
+    // Calcular novo subtotal
+    const novoSubtotal = quantidade * preco;
+
+    // Atualizar a célula do subtotal
+    subtotalCell.textContent = novoSubtotal.toFixed(2).replace('.', ',');
+}
+
+
+// Função para carregar lista de pedidos
 async function carregarPedidos() {
     try {
-        const response = await fetch(`${API_BASE_URL}/pedidos`);
+        const rota = `${API_BASE_URL}/pedido`;
+        // console.log("a rota " + rota);
+
+
+        const response = await fetch(rota);
+        //   console.log(JSON.stringify(response));
+
+
+        //    debugger
         if (response.ok) {
             const pedidos = await response.json();
-            renderizarTabelaPedidos(pedidos);
-        } else {
-            throw new Error('Erro ao carregar pedidos');
+
+            // Fetch itens do pedido for the first pedido
+            if (pedidos.length > 0) {
+                renderizarTabelaPedidos(pedidos);
+            } else {
+                throw new Error('Erro ao carregar itens do pedido');
+            }
         }
+
     } catch (error) {
         console.error('Erro:', error);
         mostrarMensagem('Erro ao carregar lista de pedidos', 'error');
     }
 }
 
-// Renderizar tabela
+// Função para renderizar tabela de pedidos
 function renderizarTabelaPedidos(pedidos) {
     pedidosTableBody.innerHTML = '';
+
     pedidos.forEach(pedido => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>
-                <button class="btn-id" onclick="selecionarPedido(${pedido.id_pedido})">
-                    ${pedido.id_pedido}
-                </button>
-            </td>
-            <td>${pedido.cpf}</td>
-            <td>${pedido.cliente || 'N/A'}</td>
-            <td>${formatarData(pedido.data_pedido)}</td>
-            <td>${parseFloat(pedido.valor_total).toFixed(2)}</td>                 
-        `;
+                    <td>
+                        <button class="btn-id" onclick="selecionarPedido(${pedido.id_pedido})">
+                            ${pedido.id_pedido}
+                        </button>
+                    </td>
+                    <td>${formatarData(pedido.data_pedido)}</td>                  
+                    <td>${pedido.cliente_pessoa_cpf_pessoa}</td>                  
+                    <td>${pedido.funcionario_pessoa_cpf_pessoa}</td>                  
+                                 
+                `;
         pedidosTableBody.appendChild(row);
     });
 }
 
-// Selecionar pedido
+// Função para selecionar pedido da tabela
 async function selecionarPedido(id) {
-    if (!id || isNaN(id)) {
-        mostrarMensagem('ID inválido ao selecionar pedido.', 'error');
-        return;
-    }
     searchId.value = id;
     await buscarPedido();
 }

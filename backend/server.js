@@ -130,10 +130,10 @@ app.use('/cardapio', cardapioRoutes);
 
 // No seu arquivo principal (app.js ou server.js)
 const pedidoRoutes = require('./routes/pedidoRoutes');
-app.use('/pedidos', pedidoRoutes); 
+app.use('/pedido', pedidoRoutes);
 
-const pedidoProdutoRoutes = require('./routes/pedidoProdutoRoutes');
-app.use('/pedidoProdutos', pedidoProdutoRoutes); 
+const pedidoprodutoRoutes = require('./routes/pedidoprodutoRoutes');
+app.use('/pedidoproduto', pedidoprodutoRoutes);
 
 const pagamentoRoutes = require('./routes/pagamentoRoutes');
 app.use('/pagamento', pagamentoRoutes); 
