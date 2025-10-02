@@ -93,7 +93,7 @@ async function buscarPedido() {
 
     try {
         const response = await fetch(`${API_BASE_URL}/pedido/${id}`);
-
+        //console.log('Response status:', response.status);
         if (response.ok) {
             const pedido = await response.json();
             preencherFormulario(pedido);
@@ -122,7 +122,7 @@ async function buscarPedido() {
 async function carregarItensDoPedido(pedidoId) {
     try {
         // debugger;
-        const responseItens = await fetch(`${API_BASE_URL}/pedido_has_produto/${pedidoId}`);
+        const responseItens = await fetch(`${API_BASE_URL}/pedidoproduto/${pedidoId}`);
 
         if (responseItens.ok) {
             const itensDoPedido = await responseItens.json();
@@ -156,8 +156,8 @@ function preencherFormulario(pedido) {
     searchId.value = pedido.id_pedido;
     document.getElementById('data_pedido').value = formatarDataParaInputDate(pedido.data_pedido);
 
-    document.getElementById('cliente_pessoa_cpf_pessoa').value = pedido.cliente_pessoa_cpf_pessoa || 0;
-    document.getElementById('funcionario_pessoa_cpf_pessoa').value = pedido.funcionario_pessoa_cpf_pessoa || 0;
+    document.getElementById('cpf').value = pedido.cpf || 0;
+    document.getElementById('valor_total').value = pedido.valor_total || 0;
 
 
 
@@ -207,8 +207,8 @@ async function salvarOperacao() {
     const pedido = {
         id_pedido: searchId.value,
         data_pedido: formData.get('data_pedido'),
-        cliente_pessoa_cpf_pessoa: formData.get('cliente_pessoa_cpf_pessoa'),
-        funcionario_pessoa_cpf_pessoa: formData.get('funcionario_pessoa_cpf_pessoa'),
+        cpf: formData.get('cpf'),
+        valor_total: formData.get('valor_total'),
     };
     let response = null;
     try {
@@ -284,8 +284,9 @@ function renderizerTabelaItensPedido(itens) {
         subTotal = subTotal.toFixed(2).replace('.', ',');
 
         row.innerHTML = `
-            <td>${item.pedido_id_pedido}</td>                  
-            <td>${item.produto_id_produto}</td>
+            <td>${item.id_pedido}</td>                  
+            <td>${item.id_produto}</td>
+            <td>${item.nome_produto}</td>
             <td>
                 <input type="number" class="quantidade-input" data-index="${index}" 
                        value="${item.quantidade}" min="1">
@@ -294,7 +295,13 @@ function renderizerTabelaItensPedido(itens) {
                 <input type="number" class="preco-input" data-index="${index}" 
                        value="${item.preco_unitario}" min="0" step="0.01">
             </td>                               
-            <td class="subtotal-cell">${subTotal}</td>                  
+            <td class="subtotal-cell">${subTotal}</td> 
+            <td>
+               <button class="btn-secondary btn-small" onclick="btnAtualizarItem(this)">Atualizar</button>
+            </td>      
+            <td>
+                 <button class="btn-secondary btn-small" onclick="btnExcluirItem(this)">Excluir</button>
+            </td>                
         `;
         itensTableBody.appendChild(row);
     });
@@ -382,8 +389,8 @@ function renderizarTabelaPedidos(pedidos) {
                         </button>
                     </td>
                     <td>${formatarData(pedido.data_pedido)}</td>                  
-                    <td>${pedido.cliente_pessoa_cpf_pessoa}</td>                  
-                    <td>${pedido.funcionario_pessoa_cpf_pessoa}</td>                  
+                    <td>${pedido.cpf}</td>                  
+                    <td>${pedido.valor_total}</td>                  
                                  
                 `;
         pedidosTableBody.appendChild(row);
@@ -394,4 +401,276 @@ function renderizarTabelaPedidos(pedidos) {
 async function selecionarPedido(id) {
     searchId.value = id;
     await buscarPedido();
+}
+
+
+// Função para adicionar uma nova linha vazia para um item na tabela de itens do pedido.
+function adicionarItem() {
+    const itensTableBody = document.getElementById('itensTableBody');
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>
+            <input type="number" class="pedido-id-input" value="${searchId.value}" disabled>
+        </td>                  
+        <td class="produto-group">
+            <input type="number" class="produto-id-input">
+            <button class="btn-secondary btn-small" onclick="buscarProdutoPorId(this)">Buscar</button>
+        </td>
+        <td>
+            <span class="produto-nome-input" id="produto-nome-input" >xx</span>
+        </td>
+        <td>
+            <input type="number" class="quantidade-input" value="1" min="1">
+        </td>
+        <td>
+            <input type="number" class="preco-input" value="0.00" min="0" step="0.01">
+        </td>                               
+        <td class="subtotal-cell">0,00</td>  
+        <td>
+            <button class="btn-secondary btn-small" onclick="btnAdicionarItem(this)">Adicionar</button>
+        </td> 
+          <td>
+            <button class="btn-secondary btn-small" onclick="btnCancelarItem(this)">Cancelar</button>
+        </td> 
+               
+    `;
+    itensTableBody.appendChild(row);
+
+    adicionarEventListenersSubtotal();
+}
+
+
+// Função para buscar o produto por ID no banco de dados. vai preencher o nome e o preço unitário
+async function buscarProdutoPorId(button) {
+    const row = button.closest('tr');
+    const produtoIdInput = row.querySelector('.produto-id-input');
+    const produtoId = produtoIdInput.value;
+
+    if (!produtoId) {
+        mostrarMensagem('Por favor, insira um ID de produto.', 'warning');
+        return;
+    }
+
+    try {
+        //const response = await fetch(`${API_BASE_URL}/pedido/${id}`);
+        const response = await fetch(`${API_BASE_URL}/produto/${produtoId}`);
+        if (!response.ok) {
+            throw new Error('Produto não encontrado.');
+        }
+
+        const produto = await response.json();
+
+        // Preenche os campos da linha com os dados do produto
+
+
+        const precoInput = row.querySelector('.preco-input');
+        precoInput.value = produto.preco_unitario;
+
+        const nome_produtoInput = row.querySelector('td:nth-child(3) span');
+        nome_produtoInput.innerHTML = produto.nome_produto;
+
+        // Atualiza o subtotal da linha
+        atualizarSubtotal({ target: precoInput });
+
+        mostrarMensagem(`Produto ${produto.nome_produto} encontrado!`, 'success');
+
+    } catch (error) {
+        console.error('Erro ao buscar produto:', error);
+        mostrarMensagem(error.message, 'error');
+    }
+}
+
+
+// Função para coletar os dados de uma nova linha e enviar ao servidor para criação.
+function btnAdicionarItem(button) {
+    // Encontra a linha (<tr>) pai do botão.
+    const row = button.closest('tr');
+    if (!row) {
+        console.error("Erro: Não foi possível encontrar a linha da tabela (<tr>).");
+        return;
+    }
+
+    // Coleta os dados dos inputs da linha.
+    const pedidoId = row.querySelector('.pedido-id-input').value;
+    const produtoId = row.querySelector('.produto-id-input').value;
+    const quantidade = row.querySelector('.quantidade-input').value;
+    const precoUnitario = row.querySelector('.preco-input').value;
+
+    // Converte os valores para os tipos corretos.
+    const itemData = {
+        id_pedido: parseInt(pedidoId),
+        id_produto: parseInt(produtoId),
+        quantidade: parseInt(quantidade),
+        preco_unitario: parseFloat(precoUnitario.replace(',', '.'))
+    };
+
+    // Valida os dados antes do envio.
+    if (isNaN(itemData.id_pedido) || isNaN(itemData.id_produto) || isNaN(itemData.quantidade) || isNaN(itemData.preco_unitario)) {
+        mostrarMensagem('Por favor, preencha todos os campos corretamente.', 'warning');
+        return;
+    }
+
+    // Envia os dados para a API usando fetch.
+    fetch(`${API_BASE_URL}/pedidoproduto`, {
+        method: 'POST', // Método para criar um novo recurso.
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(itemData)
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erro ao adicionar o item do pedido. Verifique os IDs e tente novamente.');
+            }
+            return response.json();
+        })
+        .then(data => {
+            mostrarMensagem('Item adicionado com sucesso!', 'success');
+            
+            // atualizar a interface para refletir o sucesso, 
+              buscarPedido();
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            mostrarMensagem(error.message, 'error');
+        });
+        
+}
+
+// Função para cancelar a adição de um novo item, removendo a linha da tabela.
+function btnCancelarItem(button) {
+    // 1. Encontra a linha (<tr>) pai do botão que foi clicado.
+    const row = button.closest('tr');
+
+    // 2. Verifica se a linha foi encontrada e a remove.
+    if (row) {
+        row.remove();
+        mostrarMensagem('Adição do item cancelada.', 'info');
+    } else {
+        console.error("Erro: Não foi possível encontrar a linha da tabela para cancelar.");
+    }
+}
+
+function btnAtualizarItem(button) {
+    // 1. Encontra a linha (<tr>) pai do botão que foi clicado.
+    // O 'closest' é um método muito útil para encontrar o ancestral mais próximo com o seletor especificado.
+    const row = button.closest('tr');
+
+    // Se a linha não for encontrada, algo está errado, então saímos da função.
+    if (!row) {
+        console.error("Erro: Não foi possível encontrar a linha da tabela (<tr>).");
+        return;
+    }
+
+    // 2. Pega todas as células (<td>) da linha.   
+    const cells = Array.from(row.cells);
+
+    // 3. Extrai os dados de cada célula da linha.
+    // Como sua tabela tem uma estrutura fixa, podemos usar os índices para pegar os dados.
+    // Lembre-se que os índices de arrays começam em 0.
+    const pedidoId = cells[0].textContent;
+    const produtoId = cells[1].textContent;
+    const nomeProduto = cells[2].textContent;
+    const quantidade = cells[3].querySelector('input').value;
+    const precoUnitario = cells[4].querySelector('input').value;
+
+
+    // 4. Converte os valores para os tipos de dados corretos, se necessário.
+    const itemData = {
+        id_pedido: parseInt(pedidoId),
+        id_produto: parseInt(produtoId),
+        nome_produto: nomeProduto.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, " "), // Sanitiza e remove quebras de linha  
+        quantidade: parseInt(quantidade),
+        preco_unitario: parseFloat(precoUnitario.replace(',', '.'))
+    };
+
+    //  alert("Dados do item a serem salvos:" + JSON.stringify(itemData));
+
+    // 5. Valida os dados antes de enviar (opcional, mas recomendado).
+    if (isNaN(itemData.id_pedido) || isNaN(itemData.id_produto) || isNaN(itemData.quantidade) || isNaN(itemData.preco_unitario)) {
+        mostrarMensagem('Por favor, preencha todos os campos corretamente.', 'warning');
+        return;
+    }
+
+    // remover o nome do produto do envio, pois é desnecessário
+    delete itemData.nome_produto;
+
+    //alert("Dados do item a serem salvos:" + JSON.stringify(itemData));
+
+    // 6. Envia os dados para o backend usando fetch.
+    // Ajuste a URL e o método conforme sua API. router.put('/:id_pedido/:id_produto', pedidoprodutoController.atualizarPedidoproduto);
+    // Note que estamos enviando tanto o id do pedido quanto o id do produto na URL.
+    fetch(`${API_BASE_URL}/pedidoproduto/${itemData.id_pedido}/${itemData.id_produto}`, {
+        method: 'PUT', // para atualizar
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(itemData)
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erro ao salvar o item do pedido.');
+            }
+            return response.json();
+        })
+        .then(data => {
+            mostrarMensagem('Item salvo com sucesso!', 'success');
+            // Aqui você pode atualizar a UI, limpar campos, etc.
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            mostrarMensagem(error.message, 'error');
+        });
+
+
+}
+
+function btnExcluirItem(button) {
+    // 1. Encontra a linha (<tr>) pai do botão que foi clicado.
+    const row = button.closest('tr');
+
+    if (!row) {
+        console.error("Erro: Não foi possível encontrar a linha da tabela (<tr>).");
+        return;
+    }
+
+    // 2. Extrai os IDs do pedido e do produto da linha, que compõem a chave primária.
+    const pedidoId = row.cells[0].textContent;
+    const produtoId = row.cells[1].textContent;
+
+    // 3. Valida os dados antes de enviar.
+    if (isNaN(parseInt(pedidoId)) || isNaN(parseInt(produtoId))) {
+        mostrarMensagem('IDs do pedido ou produto inválidos.', 'warning');
+        return;
+    }
+
+    // 4. Pergunta ao usuário para confirmar a exclusão.
+    // Isso evita exclusões acidentais.
+    if (!confirm(`Tem certeza que deseja excluir o item do produto ${produtoId} do pedido ${pedidoId}?`)) {
+        return; // Sai da função se o usuário cancelar
+    }
+
+    // 5. Envia a requisição DELETE para a API.
+    // A rota DELETE espera os IDs na URL para identificar o item.
+    fetch(`${API_BASE_URL}/pedidoproduto/${pedidoId}/${produtoId}`, {
+        method: 'DELETE', // O método HTTP para exclusão
+    })
+        .then(response => {
+            if (response.ok) { // A requisição foi bem-sucedida (status 204)
+                // 6. Se a exclusão no backend foi bem-sucedida, remove a linha da tabela na interface.
+                row.remove();
+                mostrarMensagem('Item excluído com sucesso!', 'success');
+            } else if (response.status === 404) {
+                // Se o item não for encontrado, informa o usuário.
+                mostrarMensagem('Erro: Item não encontrado no servidor.', 'error');
+            } else {
+                // Para outros erros, lança uma exceção.
+                throw new Error('Erro ao excluir o item do pedido.');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            mostrarMensagem(error.message, 'error');
+        });
 }

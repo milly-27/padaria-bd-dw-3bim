@@ -7,15 +7,15 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f9f6f2;
-    color: #4e342e;
+    background-color: white;
+    color: #2d4a2d;
     line-height: 1.0;
     min-height: 100vh;
 }
 
 /* Header */
 header {
-    background: linear-gradient(135deg, #4e342e, #6d4c41);
+    background: linear-gradient(135deg, #2d4a2d, #4a7c59);
     color: white;
     text-align: center;
     padding: 2rem 0;
@@ -24,7 +24,7 @@ header {
 
 header h1 {
     font-size: 1.5rem;
-    font-weight: 600;
+    font-weight: 00;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
@@ -42,32 +42,32 @@ section {
     background: white;
     border-radius: 12px;
     padding: 2rem;
-    box-shadow: 0 4px 15px rgba(78, 52, 46, 0.1);
-    border: 1px solid #efebe9;
+    box-shadow: 0 4px 15px rgba(45, 74, 45, 0.1);
+    border: 1px solid #e0f2e0;
 }
 
 section h2 {
-    color: #4e342e;
+    color: #2d4a2d;
     margin-bottom: 1.5rem;
     font-size: 1.8rem;
-    border-bottom: 3px solid #d7a55a;
+    border-bottom: 3px solid aquamarine;
     padding-bottom: 0.5rem;
 }
 
 /* Form styles */
 .search-container {
-    background: #fdfcfb;
+    background: #f0fff0;
     padding: 1.5rem;
     border-radius: 8px;
     margin-bottom: 2rem;
-    border: 2px solid #6d4c41;
+    border: 2px solid #2d4a2d;
 }
 
 .search-container label {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 600;
-    color: #4e342e;
+    color: #2d4a2d;
 }
 
 .search-input-group input,
@@ -85,23 +85,25 @@ section h2 {
     flex: 1;
     max-width: 200px;
 }
-
 fieldset {
-    border: 1px solid #a1887f;
+    border: 1px solid #6fa06f;
     border-radius: 8px;
-    padding: 1rem;
+    padding: 1.0rem;
     margin-bottom: 1rem;
-    background: #fdfdfc;
+    background: #fafffe;
 }
 
 fieldset legend {
     font-weight: 600;
-    color: #4e342e;
+    color: #2d4a2d;
     padding: 0 0.5rem;
-    font-size: 1rem;
+    font-size: 1.0rem;
 }
 
 .form-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem; /* Espaço entre os campos */
     margin-bottom: 1rem;
 }
 
@@ -109,14 +111,14 @@ fieldset legend {
     display: block;
     margin-bottom: 0.2rem;
     font-weight: 600;
-    color: #4e342e;
+    color: #2d4a2d;
 }
 
 .form-group input,
 .form-group select {
-    width: 100%;
+    width: 30%; /* Ajuste a largura dos inputs para caberem na mesma linha */
     padding: 0.8rem;
-    border: 2px solid #d7ccc8;
+    border: 2px solid #c0e0c0;
     border-radius: 6px;
     font-size: 1rem;
     transition: all 0.3s ease;
@@ -126,11 +128,10 @@ fieldset legend {
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
-    border-color: #d7a55a;
-    box-shadow: 0 0 0 3px rgba(215, 165, 90, 0.3);
-    background: #fdfaf6;
+    border-color: aquamarine;
+    box-shadow: 0 0 0 3px rgba(127, 255, 212, 0.3);
+    background: #f9fffc;
 }
-
 /* Button styles */
 .button-group {
     display: flex;
@@ -142,7 +143,7 @@ fieldset legend {
 
 button {
     padding: 0.8rem 2rem;
-    border: 1px solid #4e342e;
+    border: 1px solid #2d4a2d;
     border-radius: 6px;
     font-size: 1rem;
     font-weight: 600;
@@ -152,58 +153,58 @@ button {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #d7a55a, #c18f4e);
-    color: #fff;
+    background: linear-gradient(135deg, aquamarine, #40e0d0);
+    color: #2d4a2d;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #c18f4e, #a67c39);
+    background: linear-gradient(135deg, #40e0d0, #20b2aa);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(193, 143, 78, 0.4);
+    box-shadow: 0 4px 12px rgba(64, 224, 208, 0.4);
 }
 
 .btn-secondary {
-    background: linear-gradient(135deg, #6d4c41, #5d4037);
+    background: linear-gradient(135deg, #6fa06f, #5a8a5a);
     color: white;
 }
 
 .btn-secondary:hover {
-    background: linear-gradient(135deg, #5d4037, #4e342e);
+    background: linear-gradient(135deg, #5a8a5a, #4a7a4a);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(93, 64, 55, 0.4);
+    box-shadow: 0 4px 12px rgba(106, 160, 111, 0.4);
 }
 
 .btn-save {
-    background: linear-gradient(135deg, #d7a55a, #fbc02d);
+    background: linear-gradient(135deg, #ffa600, #ffd53f);
     color: white;
 }
 
 .btn-save:hover {
-    background: linear-gradient(135deg, #c7922f, #d7a55a);
+    background: linear-gradient(135deg, #ffa600, #ffd53f);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(193, 143, 78, 0.4);
+    box-shadow: 0 4px 12px rgba(106, 160, 111, 0.4);
 }
 
 .btn-danger {
-    background: linear-gradient(135deg, #b23a48, #8e2b34);
+    background: linear-gradient(135deg, #dc3545, #c82333);
     color: white;
 }
 
 .btn-danger:hover {
-    background: linear-gradient(135deg, #8e2b34, #6a1b24);
+    background: linear-gradient(135deg, #c82333, #a71e2a);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(178, 58, 72, 0.4);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
 }
 
 .btn-cancel {
-    background: linear-gradient(135deg, #8d6e63, #6d4c41);
+    background: linear-gradient(135deg, #6c757d, #5a6268);
     color: white;
 }
 
 .btn-cancel:hover {
-    background: linear-gradient(135deg, #6d4c41, #4e342e);
+    background: linear-gradient(135deg, #5a6268, #495057);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(141, 110, 99, 0.4);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
 }
 
 .btn-small {
@@ -213,8 +214,8 @@ button {
 }
 
 .btn-id {
-    background: #efebe9;
-    color: #4e342e;
+    background: aquamarine;
+    color: #2d4a2d;
     padding: 0.3rem 0.8rem;
     font-size: 0.9rem;
     font-weight: bold;
@@ -223,7 +224,7 @@ button {
 }
 
 .btn-id:hover {
-    background: #d7ccc8;
+    background: #40e0d0;
     transform: scale(1.05);
 }
 
@@ -231,7 +232,7 @@ button {
 .table-container {
     max-height: 400px;
     overflow-y: auto;
-    border: 2px solid #efebe9;
+    border: 2px solid #e0f2e0;
     border-radius: 8px;
     background: white;
 }
@@ -243,7 +244,7 @@ table {
 }
 
 table thead {
-    background: linear-gradient(135deg, #4e342e, #6d4c41);
+    background: linear-gradient(135deg, #2d4a2d, #4a7c59);
     color: white;
     position: sticky;
     top: 0;
@@ -254,7 +255,7 @@ table th,
 table td {
     padding: 1rem;
     text-align: left;
-    border-bottom: 1px solid #efebe9;
+    border-bottom: 1px solid #e0f2e0;
 }
 
 table th {
@@ -269,15 +270,15 @@ table tbody tr {
 }
 
 table tbody tr:hover {
-    background-color: #f5eee9;
+    background-color: #f0fff0;
 }
 
 table tbody tr:nth-child(even) {
-    background-color: #fdfdfc;
+    background-color: #fafffe;
 }
 
 table tbody tr:nth-child(even):hover {
-    background-color: #f5eee9;
+    background-color: #f0fff0;
 }
 
 /* Message styles */
@@ -298,27 +299,27 @@ table tbody tr:nth-child(even):hover {
 }
 
 .message.success {
-    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
-    color: #2e7d32;
-    border: 1px solid #c8e6c9;
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    color: #155724;
+    border: 1px solid #c3e6cb;
 }
 
 .message.error {
-    background: linear-gradient(135deg, #fce4ec, #f8bbd0);
-    color: #880e4f;
-    border: 1px solid #f8bbd0;
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+    color: #721c24;
+    border: 1px solid #f5c6cb;
 }
 
 .message.warning {
-    background: linear-gradient(135deg, #fff8e1, #ffe082);
-    color: #8d6e63;
-    border: 1px solid #ffe082;
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    color: #856404;
+    border: 1px solid #ffeaa7;
 }
 
 .message.info {
-    background: linear-gradient(135deg, #ede7f6, #d1c4e9);
-    color: #4527a0;
-    border: 1px solid #d1c4e9;
+    background: linear-gradient(135deg, #d1ecf1, aquamarine);
+    color: #0c5460;
+    border: 1px solid #b8daff;
 }
 
 @keyframes slideIn {
@@ -326,6 +327,7 @@ table tbody tr:nth-child(even):hover {
         transform: translateX(100%);
         opacity: 0;
     }
+
     to {
         transform: translateX(0);
         opacity: 1;
@@ -334,7 +336,7 @@ table tbody tr:nth-child(even):hover {
 
 /* Footer */
 footer {
-    background: #4e342e;
+    background: #2d4a2d;
     color: white;
     text-align: center;
     padding: 1.5rem;
@@ -394,4 +396,34 @@ footer {
     fieldset {
         padding: 1rem;
     }
+}
+
+/*
+ * Contêiner para o input e o botão de busca dentro da tabela.
+ * Isso resolve o problema de alinhamento do ID do produto.
+ */
+.produto-group {
+    display: flex;
+    align-items: center; /* Alinha verticalmente os itens no centro */
+    gap: 8px; /* Espaço entre o input e o botão */
+    height: 100%;
+}
+
+.produto-group input {
+    /* Ocupa o espaço restante */
+    flex-grow: 1; 
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+    height: 38px;
+    box-sizing: border-box; /* Garante que o padding e a borda sejam incluídos na altura */
+}
+
+.produto-group .btn-buscar-pequeno {
+    flex-shrink: 0; /* Impede que o botão encolha */
+    padding: 6px 10px;
+    font-size: 0.9rem;
+    height: 38px; /* Mantém a mesma altura do input */
+    min-width: auto;
 }

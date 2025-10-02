@@ -41,38 +41,39 @@
                         <input type="date" id="data_pedido" name="data_pedido" required>
                         <label for="cpf">CPF:</label>
                         <input type="number" id="cpf" name="cpf" required>
-                        <label for="valor_total">Valor total:</label>
-                        <input type="number" id="valor_total" name="valor_total" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="nome_pessoa">Nome da Pessoa:</label>
-                        <input type="text" id="nome_pessoa" name="nome_pessoa" disabled>
+                        <label for="valor_total">Valor Total:</label>
+                        <input type="number" id="valor_total" name="valor_total"
+                            required>
                     </div>
                 </fieldset>
             </form>
 
+ 
+
             <div class="itensDoPedido">
-                <h3>Itens do Pedido</h3>
+                <div>Itens do Pedido                   
+                    <button type="button" id="btnAdicionarItem" onclick="adicionarItem()" class="btn-secondary btn-small"><i
+                            class="fas fa-box-open"></i> Adicionar Item</button> 
+                </div>
                 <div class="item-table-container">
                     <table id="itensTable">
                         <thead>
                             <tr>
                                 <th>ID Pedido</th>
-                                <th>CPF da Pessoa</th>
-                                <th>Nome da Pessoa</th>
-                                <th>ID Produto</th>
-                                <th>Nome do Produto</th>
+                                <th>ID</th>
+                                <th>Produto</th>
                                 <th>Quantidade</th>
                                 <th>Preço Unitário</th>
                                 <th>Subtotal</th>
-                                <!-- <th>Ações</th> -->
+                                <th>Salvar</th>
+                                <th>Excluir</th>
                             </tr>
                         </thead>
                         <tbody id="itensTableBody">
                             <!-- Itens serão carregados dinamicamente -->
                         </tbody>
                     </table>
-            </div>    
+                </div>
 
 
         </section>
@@ -82,11 +83,10 @@
                 <table id="pedidosTable">
                     <thead>
                         <tr>
-                            <th>ID pedido</th>
+                            <th>ID</th>
                             <th>Data</th>
-                             <th>cpf</th>
-                              <th>nome</th>
-                            <th>valor total</th>
+                            <th>Cliente</th>
+                            <th>Funcionário</th>
                         </tr>
                     </thead>
                     <tbody id="pedidosTableBody">
