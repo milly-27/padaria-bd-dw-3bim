@@ -1,3 +1,4 @@
+
 // Dados mockados para teste sem banco de dados
 let pessoas = [
     {
@@ -91,164 +92,98 @@ let clientes = [
     }
 ];
 
+let pedidos = [
+    {
+        id_pedido: 1,
+        data_pedido: '2025-10-03',
+        cpf: '12345678901',
+        valor_total: 10.50
+    },
+    {
+        id_pedido: 2,
+        data_pedido: '2025-10-04',
+        cpf: '98765432100',
+        valor_total: 25.00
+    }
+];
+
+let pedidoProdutos = [
+    {
+        id_pedido: 1,
+        id_produto: 1,
+        quantidade: 2,
+        preco_unitario: 0.50,
+        nome_produto: 'Pão Francês'
+    },
+    {
+        id_pedido: 1,
+        id_produto: 2,
+        quantidade: 1,
+        preco_unitario: 3.50,
+        nome_produto: 'Croissant'
+    }
+];
+
 // Funções para simular operações do banco
 const mockDatabase = {
     // Pessoas
-    async listarPessoas() {
-        return { rows: pessoas };
-    },
-
-    async criarPessoa(dados) {
-        const novoId = Math.max(...pessoas.map(p => p.id_pessoa), 0) + 1;
-        const novaPessoa = {
-            id_pessoa: dados.id_pessoa || novoId,
-            cpf_pessoa: dados.cpf_pessoa,
-            nome_pessoa: dados.nome_pessoa,
-            email_pessoa: dados.email_pessoa,
-            senha_pessoa: dados.senha_pessoa
-        };
-        pessoas.push(novaPessoa);
-        return { rows: [novaPessoa] };
-    },
-
-    async obterPessoa(id) {
-        const pessoa = pessoas.find(p => p.id_pessoa == id);
-        return { rows: pessoa ? [pessoa] : [] };
-    },
-
-    async atualizarPessoa(id, dados) {
-        const index = pessoas.findIndex(p => p.id_pessoa == id);
-        if (index !== -1) {
-            pessoas[index] = { ...pessoas[index], ...dados };
-            return { rows: [pessoas[index]] };
-        }
-        return { rows: [] };
-    },
-
-    async deletarPessoa(id) {
-        const index = pessoas.findIndex(p => p.id_pessoa == id);
-        if (index !== -1) {
-            pessoas.splice(index, 1);
-            return { rows: [] };
-        }
-        return { rows: [] };
-    },
-
-    // Produtos
-    async listarProdutos() {
-        return { rows: produtos };
-    },
-
-    async criarProduto(dados) {
-        const novoId = Math.max(...produtos.map(p => p.id_produto), 0) + 1;
-        const categoria = categorias.find(c => c.id_categoria == dados.id_categoria);
-        const novoProduto = {
-            id_produto: dados.id_produto || novoId,
-            nome_produto: dados.nome_produto,
-            preco: dados.preco,
-            quantidade_estoque: dados.quantidade_estoque,
-            id_categoria: dados.id_categoria,
-            imagem_path: dados.imagem_path || null,
-            nome_categoria: categoria ? categoria.nome_categoria : 'Sem categoria'
-        };
-        produtos.push(novoProduto);
-        return { rows: [novoProduto] };
-    },
-
-    async obterProduto(id) {
-        const produto = produtos.find(p => p.id_produto == id);
-        return { rows: produto ? [produto] : [] };
-    },
-
-    async atualizarProduto(id, dados) {
-        const index = produtos.findIndex(p => p.id_produto == id);
-        if (index !== -1) {
-            const categoria = categorias.find(c => c.id_categoria == dados.id_categoria);
-            produtos[index] = { 
-                ...produtos[index], 
-                ...dados,
-                nome_categoria: categoria ? categoria.nome_categoria : 'Sem categoria'
+    async query(sql, params) {
+        // Simula a lógica de query para o cadastro
+        if (sql.includes("SELECT * FROM pessoa WHERE cpf = $1 OR email_pessoa = $2")) {
+            const [cpf, email] = params;
+            const existingPerson = pessoas.find(p => p.cpf_pessoa === cpf || p.email_pessoa === email);
+            return { rows: existingPerson ? [existingPerson] : [] };
+        } else if (sql.includes("INSERT INTO pessoa (cpf, nome_pessoa, email_pessoa, senha_pessoa) VALUES ($1, $2, $3, $4)")) {
+            const [cpf, nome, email, senha] = params;
+            const novoId = Math.max(...pessoas.map(p => p.id_pessoa), 0) + 1;
+            const novaPessoa = {
+                id_pessoa: novoId,
+                cpf_pessoa: cpf,
+                nome_pessoa: nome,
+                email_pessoa: email,
+                senha_pessoa: senha
             };
-            return { rows: [produtos[index]] };
-        }
-        return { rows: [] };
-    },
-
-    async deletarProduto(id) {
-        const index = produtos.findIndex(p => p.id_produto == id);
-        if (index !== -1) {
-            produtos.splice(index, 1);
+            pessoas.push(novaPessoa);
+            return { rows: [novaPessoa] };
+        } else if (sql.includes("SELECT * FROM pedido ORDER BY id_pedido")) {
+            return { rows: pedidos };
+        } else if (sql.includes("SELECT * FROM pedido WHERE id_pedido = $1")) {
+            const id = params[0];
+            const pedido = pedidos.find(p => p.id_pedido == id);
+            return { rows: pedido ? [pedido] : [] };
+        } else if (sql.includes("INSERT INTO pedido (id_pedido, data_pedido, cpf, valor_total) VALUES ($1, $2, $3, $4)")) {
+            const [id_pedido, data_pedido, cpf, valor_total] = params;
+            const novoPedido = { id_pedido, data_pedido, cpf, valor_total };
+            pedidos.push(novoPedido);
+            return { rows: [novoPedido] };
+        } else if (sql.includes("UPDATE pedido SET data_pedido = $1, cpf = $2, valor_total = $3 WHERE id_pedido = $4")) {
+            const [data_pedido, cpf, valor_total, id_pedido] = params;
+            const index = pedidos.findIndex(p => p.id_pedido == id_pedido);
+            if (index !== -1) {
+                pedidos[index] = { ...pedidos[index], data_pedido, cpf, valor_total };
+                return { rows: [pedidos[index]] };
+            }
             return { rows: [] };
+        } else if (sql.includes("DELETE FROM pedido WHERE id_pedido = $1")) {
+            const id = params[0];
+            const initialLength = pedidos.length;
+            pedidos = pedidos.filter(p => p.id_pedido != id);
+            return { rows: initialLength !== pedidos.length ? [{}] : [] };
+        } else if (sql.includes("SELECT * FROM pedidoproduto WHERE id_pedido = $1")) {
+            const id = params[0];
+            const itens = pedidoProdutos.filter(item => item.id_pedido == id);
+            return { rows: itens };
         }
+        // Adicione mais simulações de query conforme necessário
         return { rows: [] };
     },
 
-    // Categorias
-    async listarCategorias() {
-        return { rows: categorias };
+    async testConnection() {
+        return 'mock';
     },
 
-    // Cargos
-    async listarCargos() {
-        return { rows: cargos };
-    },
-
-    // Funcionários
-    async criarFuncionario(dados) {
-        const cargo = cargos.find(c => c.id_cargo == dados.id_cargo);
-        const novoFuncionario = {
-            cpf_pessoa: dados.cpf_pessoa,
-            salario_funcionario: dados.salario_funcionario,
-            id_cargo: dados.id_cargo,
-            nome_cargo: cargo ? cargo.nome_cargo : 'Cargo não encontrado'
-        };
-        
-        // Remove funcionário existente se houver
-        const index = funcionarios.findIndex(f => f.cpf_pessoa === dados.cpf_pessoa);
-        if (index !== -1) {
-            funcionarios[index] = novoFuncionario;
-        } else {
-            funcionarios.push(novoFuncionario);
-        }
-        
-        return { rows: [novoFuncionario] };
-    },
-
-    async obterFuncionarioPorCpf(cpf) {
-        const funcionario = funcionarios.find(f => f.cpf_pessoa === cpf);
-        return { rows: funcionario ? [funcionario] : [] };
-    },
-
-    // Clientes
-    async criarCliente(dados) {
-        const novoCliente = {
-            cpf_pessoa: dados.cpf_pessoa
-        };
-        
-        // Remove cliente existente se houver
-        const index = clientes.findIndex(c => c.cpf_pessoa === dados.cpf_pessoa);
-        if (index === -1) {
-            clientes.push(novoCliente);
-        }
-        
-        return { rows: [novoCliente] };
-    },
-
-    async obterClientePorCpf(cpf) {
-        const cliente = clientes.find(c => c.cpf_pessoa === cpf);
-        return { rows: cliente ? [cliente] : [] };
-    },
-
-    // Login
-    async verificarLogin(email, senha) {
-        const pessoa = pessoas.find(p => p.email_pessoa === email && p.senha_pessoa === senha);
-        return { rows: pessoa ? [pessoa] : [] };
-    },
-
-    async verificarEmailExiste(email) {
-        const pessoa = pessoas.find(p => p.email_pessoa === email);
-        return { rows: pessoa ? [pessoa] : [] };
-    }
+    // Outras funções mockadas podem ser adicionadas aqui, se necessário
 };
 
 module.exports = mockDatabase;
+

@@ -33,12 +33,12 @@ if (loginForm) {
 async function verificarSeEstaLogado() {
     console.log('=== VERIFICANDO SE ESTÁ LOGADO ===');
     try {
-        const url = `${API_BASE_URL}/verificar-login`;
+        const url = `${API_BASE_URL}/login/verificar-login`; // Rota atualizada
         console.log('Tentando acessar:', url);
         
         const response = await fetch(url, {       
             method: 'GET',
-            credentials: 'include'
+            credentials: 'include' // Importante para enviar cookies
         });
         
         console.log('Status verificar login:', response.status);
@@ -48,7 +48,10 @@ async function verificarSeEstaLogado() {
             console.log('Dados verificar login:', data);
             
             if (data.logado) {
-                mostrarMensagem('Você já está logado! Redirecionando...', 'success');
+                // Se já estiver logado, redireciona para o menu
+                mostrarMensagem(`Bem-vindo de volta, ${data.usuario.nome_pessoa}! Redirecionando...`, 'success');
+                // Salva os dados do usuário no localStorage
+                localStorage.setItem('usuarioLogado', JSON.stringify(data.usuario));
                 setTimeout(() => {
                     window.location.href = '../menu.html';
                 }, 1000);
@@ -58,9 +61,7 @@ async function verificarSeEstaLogado() {
     } catch (error) {
         console.error('=== ERRO AO VERIFICAR LOGIN ===');
         console.error('Erro:', error);
-        console.error('Nome do erro:', error.name);
-        console.error('Mensagem:', error.message);
-        // Continua normal se não conseguir verificar
+        // Continua normal se não conseguir verificar (usuário não logado)
     }
 }
 
@@ -102,7 +103,7 @@ async function fazerLogin(event) {
     }
 
     // Validação de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[\S+@\S+\.\S+]+$/;
     if (!emailRegex.test(email)) {
         console.log('Validação falhou: email inválido');
         mostrarMensagem('Por favor, digite um email válido!', 'error');
@@ -112,19 +113,19 @@ async function fazerLogin(event) {
     try {
         mostrarMensagem('Verificando credenciais...', 'info');
         
-        const url = `${API_BASE_URL}/login`;
+        const url = `${API_BASE_URL}/login/login`; // Rota atualizada
         console.log('URL de login:', url);
         console.log('Iniciando requisição fetch...');
         
-        const requestData = { email, senha };
-        console.log('Dados da requisição:', { ...requestData, senha: '[OCULTA]' });
+        const requestData = { email_pessoa: email, senha_pessoa: senha }; // Nomes dos campos atualizados
+        console.log('Dados da requisição:', { ...requestData, senha_pessoa: '[OCULTA]' });
         
         const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            credentials: 'include',
+            credentials: 'include', // Importante para receber cookies
             body: JSON.stringify(requestData)
         });
 
@@ -132,10 +133,6 @@ async function fazerLogin(event) {
         console.log('Status:', response.status);
         console.log('StatusText:', response.statusText);
         console.log('Headers:', response.headers);
-        
-        if (!response.ok) {
-            console.log('Response não OK, tentando ler como JSON...');
-        }
         
         const data = await response.json();
         console.log('Dados da resposta:', data);
@@ -147,10 +144,9 @@ async function fazerLogin(event) {
             
             // Salvar dados no localStorage
             const userData = {
-                id: data.usuario.id_pessoa,
+                cpf: data.usuario.cpf,
                 nome: data.usuario.nome_pessoa,
-                email: data.usuario.email_pessoa,
-                cpf: data.usuario.cpf_pessoa
+                email: data.usuario.email_pessoa
             };
             
             console.log('Salvando dados no localStorage:', userData);
@@ -181,7 +177,7 @@ async function fazerLogin(event) {
             
         } else {
             console.log('=== OUTRO ERRO ===');
-            mostrarMensagem(data.error || 'Erro ao fazer login. Tente novamente.', 'error');
+            mostrarMensagem(data.message || 'Erro ao fazer login. Tente novamente.', 'error');
         }
         
     } catch (error) {
@@ -196,7 +192,7 @@ async function fazerLogin(event) {
         if (error instanceof TypeError && (error.message.includes('fetch') || error.message.includes('NetworkError'))) {
             mostrarMensagem('Servidor não está respondendo. Verifique se está rodando na porta 3001.', 'error');
         } else if (error.name === 'SyntaxError') {
-            mostrarMensagem('Erro ao processar resposta do servidor.', 'error');
+            mostrarMensagem('Erro ao processar resposta do servidor. Verifique o console para mais detalhes.', 'error');
         } else {
             mostrarMensagem('Erro de conexão com o servidor. Tente novamente.', 'error');
         }
@@ -240,3 +236,4 @@ function voltarAoMenu() {
 }
 
 console.log('=== SCRIPT FINALIZADO ===');
+

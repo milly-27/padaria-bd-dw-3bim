@@ -1,14 +1,18 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const loginController = require('../controllers/loginController');
+const loginController = require("../controllers/loginController");
 
-// Rota para login
-router.post('/login', loginController.login);
+// Rota de registro
+router.post("/register", loginController.register);
 
-// Rota para verificar se está logado
-router.get('/verificar-login', loginController.verificarLogin);
+// Rota de login
+router.post("/login", loginController.login);
 
-// Rota para logout
-router.post('/logout', loginController.logout);
+// Rota para verificar status de login
+router.get("/verificar-login", loginController.verificarLogin);
+
+// Rota de logout
+router.post("/logout", loginController.logout);
 
 module.exports = router;
+

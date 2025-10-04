@@ -40,17 +40,11 @@ function mostrarMensagem(texto, tipo = 'info') {
     }, 3000);
 }
 
-function bloquearCampos(bloquearPrimeiro) {
-    const inputs = form.querySelectorAll('input, select');
-    inputs.forEach((input, index) => {
-        if (index === 0) {
-            // Primeiro elemento - bloqueia se bloquearPrimeiro for true, libera se for false
-            input.disabled = bloquearPrimeiro;
-        } else {
-            // Demais elementos - faz o oposto do primeiro
-            input.disabled = !bloquearPrimeiro;
-        }
-    });
+function bloquearCampos(bloquearPK) {
+    document.getElementById("searchId").disabled = bloquearPK;
+    document.getElementById("data_pedido").disabled = bloquearPK;
+    document.getElementById("cpf").disabled = bloquearPK;
+    document.getElementById("valor_total").disabled = bloquearPK;
 }
 
 // Função para limpar formulário

@@ -143,6 +143,10 @@ app.use('/forma_pagamentos', forma_pagamentoRoutes);
 
 const pagamento_has_formapagamentoRoutes = require('./routes/pagamento_has_formapagamentoRoutes');
 app.use('/pagamento_has_formapagamentos', pagamento_has_formapagamentoRoutes);
+
+const cadastroRoutes = require("./routes/cadastroRoutes");
+app.use("/cadastro", cadastroRoutes);
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Rota padrão
