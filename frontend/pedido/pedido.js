@@ -1,4 +1,3 @@
-
 // Configuração da API, IP e porta.
 const API_BASE_URL = 'http://localhost:3001';
 let currentPersonId = null;
@@ -29,8 +28,8 @@ btnExcluir.addEventListener('click', excluirPedido);
 btnCancelar.addEventListener('click', cancelarOperacao);
 btnSalvar.addEventListener('click', salvarOperacao);
 
-mostrarBotoes(true, false, false, false, false, false);// mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)
-bloquearCampos(false);//libera pk e bloqueia os demais campos
+mostrarBotoes(true, false, false, false, false, false);
+bloquearCampos(false); // Inicia com searchId liberado e demais campos bloqueados
 
 // Função para mostrar mensagens
 function mostrarMensagem(texto, tipo = 'info') {
@@ -40,18 +39,21 @@ function mostrarMensagem(texto, tipo = 'info') {
     }, 3000);
 }
 
-function bloquearCampos(bloquearPK) {
-    document.getElementById("searchId").disabled = bloquearPK;
-    document.getElementById("data_pedido").disabled = bloquearPK;
-    document.getElementById("cpf").disabled = bloquearPK;
-    document.getElementById("valor_total").disabled = bloquearPK;
+// FUNÇÃO CORRIGIDA - Agora separa searchId dos campos editáveis
+function bloquearCampos(liberarCamposEdicao) {
+    // searchId sempre fica no estado oposto dos campos de edição
+    document.getElementById("searchId").disabled = liberarCamposEdicao;
+    
+    // Campos de edição seguem o parâmetro
+    document.getElementById("data_pedido").disabled = !liberarCamposEdicao;
+    document.getElementById("cpf").disabled = !liberarCamposEdicao;
+    document.getElementById("valor_total").disabled = !liberarCamposEdicao;
 }
 
 // Função para limpar formulário
 function limparFormulario() {
     form.reset();
 }
-
 
 function mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar) {
     btnBuscar.style.display = btBuscar ? 'inline-block' : 'none';
@@ -82,19 +84,16 @@ async function buscarPedido() {
         mostrarMensagem('Digite um ID para buscar', 'warning');
         return;
     }
-    bloquearCampos(false);
+    bloquearCampos(false); // Bloqueia campos de edição após buscar
     searchId.focus();
 
     try {
         const response = await fetch(`${API_BASE_URL}/pedido/${id}`);
-        //console.log('Response status:', response.status);
         if (response.ok) {
             const pedido = await response.json();
             preencherFormulario(pedido);
             mostrarBotoes(true, false, true, true, false, false);
             mostrarMensagem('Pedido encontrado!', 'success');
-
-            // Fazer a requisição dos itens separadamente e carregar na tabela
             await carregarItensDoPedido(pedido.id_pedido);
 
         } else if (response.status === 404) {
@@ -115,70 +114,54 @@ async function buscarPedido() {
 // Função para carregar itens
 async function carregarItensDoPedido(pedidoId) {
     try {
-        // debugger;
         const responseItens = await fetch(`${API_BASE_URL}/pedidoproduto/${pedidoId}`);
 
         if (responseItens.ok) {
             const itensDoPedido = await responseItens.json();
             renderizerTabelaItensPedido(itensDoPedido || []);
         } else if (responseItens.status === 404) {
-            // Silencia completamente o 404 - sem console.log
             const itensTableBody = document.getElementById('itensTableBody');
             itensTableBody.innerHTML = '';
         }
-        // Ignora outros status silenciosamente
     } catch (error) {
-        // Ignora erros de rede silenciosamente para itens
+        // Ignora erros silenciosamente
     }
 }
 
 function formatarDataParaInputDate(data) {
-    const dataObj = new Date(data); // Converte a data para um objeto Date
+    const dataObj = new Date(data);
     const ano = dataObj.getFullYear();
-    const mes = String(dataObj.getMonth() + 1).padStart(2, '0'); // Meses começam do zero, então +1
-    const dia = String(dataObj.getDate()).padStart(2, '0'); // Garante que o dia tenha 2 dígitos
-    return `${ano}-${mes}-${dia}`; // Retorna a data no formato yyyy-mm-dd
+    const mes = String(dataObj.getMonth() + 1).padStart(2, '0');
+    const dia = String(dataObj.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
 }
 
 // Função para preencher formulário com dados da pedido
 function preencherFormulario(pedido) {
-    //  console.log(JSON.stringify(pedido));
-    //  console.log('data pedido: ' + pedido.data_pedido);
-    //  console.log('data pedido formatar: ' + formatarDataParaInputDate(pedido.data_pedido));
-
     currentPersonId = pedido.id_pedido;
     searchId.value = pedido.id_pedido;
     document.getElementById('data_pedido').value = formatarDataParaInputDate(pedido.data_pedido);
-
-    document.getElementById('cpf').value = pedido.cpf || 0;
+    document.getElementById('cpf').value = pedido.cpf || '';
     document.getElementById('valor_total').value = pedido.valor_total || 0;
-
-
-
 }
-
 
 // Função para incluir pedido
 async function incluirPedido() {
-
     mostrarMensagem('Digite os dados!', 'success');
     currentPersonId = searchId.value;
-    // console.log('Incluir novo pedido - currentPersonId: ' + currentPersonId);
     limparFormulario();
     searchId.value = currentPersonId;
-    bloquearCampos(true);
-
-    mostrarBotoes(false, false, false, false, true, true); // mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)
+    bloquearCampos(true); // Libera campos de edição
+    mostrarBotoes(false, false, false, false, true, true);
     document.getElementById('data_pedido').focus();
     operacao = 'incluir';
-    // console.log('fim nova pedido - currentPersonId: ' + currentPersonId);
 }
 
-// Função para alterar pedido
+// FUNÇÃO ALTERARPED IDO CORRIGIDA
 async function alterarPedido() {
-    mostrarMensagem('Digite os dados!', 'success');
-    bloquearCampos(true);
-    mostrarBotoes(false, false, false, false, true, true);// mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)
+    mostrarMensagem('Altere os dados necessários!', 'info');
+    bloquearCampos(true); // Libera campos de edição, bloqueia searchId
+    mostrarBotoes(false, false, false, false, true, true);
     document.getElementById('data_pedido').focus();
     operacao = 'alterar';
 }
@@ -187,23 +170,40 @@ async function alterarPedido() {
 async function excluirPedido() {
     mostrarMensagem('Excluindo pedido...', 'info');
     currentPersonId = searchId.value;
-    //bloquear searchId
     searchId.disabled = true;
-    bloquearCampos(false); // libera os demais campos
-    mostrarBotoes(false, false, false, false, true, true);// mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)           
+    bloquearCampos(false); // Bloqueia campos de edição
+    mostrarBotoes(false, false, false, false, true, true);
     operacao = 'excluir';
 }
 
+// FUNÇÃO SALVAR OPERACAO CORRIGIDA
 async function salvarOperacao() {
     console.log('Operação:', operacao + ' - currentPersonId: ' + currentPersonId + ' - searchId: ' + searchId.value);
 
-    const formData = new FormData(form);
+    // CORREÇÃO: Pegar valores diretamente dos inputs, não do FormData
     const pedido = {
         id_pedido: searchId.value,
-        data_pedido: formData.get('data_pedido'),
-        cpf: formData.get('cpf'),
-        valor_total: formData.get('valor_total'),
+        data_pedido: document.getElementById('data_pedido').value,
+        cpf: document.getElementById('cpf').value,
+        valor_total: document.getElementById('valor_total').value,
     };
+
+    // VALIDAÇÃO: Verificar se campos obrigatórios estão preenchidos
+    if (operacao !== 'excluir') {
+        if (!pedido.data_pedido) {
+            mostrarMensagem('Data do pedido é obrigatória!', 'error');
+            return;
+        }
+        if (!pedido.cpf) {
+            mostrarMensagem('CPF é obrigatório!', 'error');
+            return;
+        }
+        if (!pedido.valor_total) {
+            mostrarMensagem('Valor total é obrigatório!', 'error');
+            return;
+        }
+    }
+
     let response = null;
     try {
         if (operacao === 'incluir') {
@@ -223,41 +223,37 @@ async function salvarOperacao() {
                 body: JSON.stringify(pedido)
             });
         } else if (operacao === 'excluir') {
-            // console.log('Excluindo pedido com ID:', currentPersonId);
             response = await fetch(`${API_BASE_URL}/pedido/${currentPersonId}`, {
                 method: 'DELETE'
             });
-            console.log('Pedido excluído' + response.status);
         }
+
         if (response.ok && (operacao === 'incluir' || operacao === 'alterar')) {
             const novaPedido = await response.json();
             mostrarMensagem('Operação ' + operacao + ' realizada com sucesso!', 'success');
             limparFormulario();
-            //  carregarPedidos();
-
         } else if (operacao !== 'excluir') {
             const error = await response.json();
-            mostrarMensagem(error.error || 'Erro ao incluir pedido', 'error');
+            mostrarMensagem(error.error || 'Erro ao ' + operacao + ' pedido', 'error');
         } else {
             mostrarMensagem('Pedido excluído com sucesso!', 'success');
             limparFormulario();
-            //  carregarPedidos();
         }
     } catch (error) {
         console.error('Erro:', error);
-        mostrarMensagem('Erro ao incluir ou alterar a pedido', 'error');
+        mostrarMensagem('Erro ao realizar operação', 'error');
     }
 
-    mostrarBotoes(true, false, false, false, false, false);// mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)
-    bloquearCampos(false);//libera pk e bloqueia os demais campos
+    mostrarBotoes(true, false, false, false, false, false);
+    bloquearCampos(false); // Volta ao estado inicial
     document.getElementById('searchId').focus();
 }
 
 // Função para cancelar operação
 function cancelarOperacao() {
     limparFormulario();
-    mostrarBotoes(true, false, false, false, false, false);// mostrarBotoes(btBuscar, btIncluir, btAlterar, btExcluir, btSalvar, btCancelar)
-    bloquearCampos(false);//libera pk e bloqueia os demais campos
+    mostrarBotoes(true, false, false, false, false, false);
+    bloquearCampos(false);
     document.getElementById('searchId').focus();
     mostrarMensagem('Operação cancelada', 'info');
 }
@@ -266,12 +262,10 @@ function renderizerTabelaItensPedido(itens) {
     const itensTableBody = document.getElementById('itensTableBody');
     itensTableBody.innerHTML = '';
 
-    // Check if itens is a single object and wrap it in an array
     if (typeof itens === 'object' && !Array.isArray(itens)) {
-        itens = [itens]; // Wrap the object in an array        
+        itens = [itens];
     }
 
-    // Iterate over the array and render rows
     itens.forEach((item, index) => {
         const row = document.createElement('tr');
         let subTotal = item.quantidade * item.preco_unitario;
@@ -300,21 +294,19 @@ function renderizerTabelaItensPedido(itens) {
         itensTableBody.appendChild(row);
     });
 
-    // Adicionar event listeners para atualizar o subtotal
     adicionarEventListenersSubtotal();
+    atualizarValorTotal();
 }
 
 function adicionarEventListenersSubtotal() {
     const quantidadeInputs = document.querySelectorAll('.quantidade-input');
     const precoInputs = document.querySelectorAll('.preco-input');
 
-    // Adicionar event listeners para os inputs de quantidade
     quantidadeInputs.forEach(input => {
         input.addEventListener('input', atualizarSubtotal);
         input.addEventListener('change', atualizarSubtotal);
     });
 
-    // Adicionar event listeners para os inputs de preço
     precoInputs.forEach(input => {
         input.addEventListener('input', atualizarSubtotal);
         input.addEventListener('change', atualizarSubtotal);
@@ -329,41 +321,51 @@ function atualizarSubtotal(event) {
     const precoInput = row.querySelector('.preco-input');
     const subtotalCell = row.querySelector('.subtotal-cell');
 
-    // Obter valores atuais (usando parseFloat e fallback para 0 se for inválido)
     const quantidade = parseFloat(quantidadeInput.value) || 0;
     const preco = parseFloat(precoInput.value) || 0;
 
-    // Calcular novo subtotal
     const novoSubtotal = quantidade * preco;
-
-    // Atualizar a célula do subtotal
     subtotalCell.textContent = novoSubtotal.toFixed(2).replace('.', ',');
+    
+    atualizarValorTotal();
 }
 
+// Função para calcular e atualizar o valor total do pedido
+function atualizarValorTotal() {
+    const itensTableBody = document.getElementById('itensTableBody');
+    const rows = itensTableBody.querySelectorAll('tr');
+    
+    let total = 0;
+    
+    rows.forEach(row => {
+        const quantidadeInput = row.querySelector('.quantidade-input');
+        const precoInput = row.querySelector('.preco-input');
+        
+        if (quantidadeInput && precoInput) {
+            const quantidade = parseFloat(quantidadeInput.value) || 0;
+            const preco = parseFloat(precoInput.value) || 0;
+            total += quantidade * preco;
+        }
+    });
+    
+    // Atualiza o campo valor_total
+    document.getElementById('valor_total').value = total.toFixed(2);
+}
 
 // Função para carregar lista de pedidos
 async function carregarPedidos() {
     try {
         const rota = `${API_BASE_URL}/pedido`;
-        // console.log("a rota " + rota);
-
-
         const response = await fetch(rota);
-        //   console.log(JSON.stringify(response));
 
-
-        //    debugger
         if (response.ok) {
             const pedidos = await response.json();
-
-            // Fetch itens do pedido for the first pedido
             if (pedidos.length > 0) {
                 renderizarTabelaPedidos(pedidos);
             } else {
                 throw new Error('Erro ao carregar itens do pedido');
             }
         }
-
     } catch (error) {
         console.error('Erro:', error);
         mostrarMensagem('Erro ao carregar lista de pedidos', 'error');
@@ -396,7 +398,6 @@ async function selecionarPedido(id) {
     searchId.value = id;
     await buscarPedido();
 }
-
 
 // Função para adicionar uma nova linha vazia para um item na tabela de itens do pedido.
 function adicionarItem() {
@@ -434,8 +435,7 @@ function adicionarItem() {
     adicionarEventListenersSubtotal();
 }
 
-
-// Função para buscar o produto por ID no banco de dados. vai preencher o nome e o preço unitário
+// Função para buscar o produto por ID no banco de dados
 async function buscarProdutoPorId(button) {
     const row = button.closest('tr');
     const produtoIdInput = row.querySelector('.produto-id-input');
@@ -447,7 +447,6 @@ async function buscarProdutoPorId(button) {
     }
 
     try {
-        //const response = await fetch(`${API_BASE_URL}/pedido/${id}`);
         const response = await fetch(`${API_BASE_URL}/produtos/${produtoId}`);
         if (!response.ok) {
             throw new Error('Produto não encontrado.');
@@ -455,16 +454,12 @@ async function buscarProdutoPorId(button) {
 
         const produto = await response.json();
 
-        // Preenche os campos da linha com os dados do produto
-
-
         const precoInput = row.querySelector('.preco-input');
         precoInput.value = produto.preco;
 
         const nome_produtoInput = row.querySelector('td:nth-child(3) span');
         nome_produtoInput.innerHTML = produto.nome_produto;
 
-        // Atualiza o subtotal da linha
         atualizarSubtotal({ target: precoInput });
 
         mostrarMensagem(`Produto ${produto.nome_produto} encontrado!`, 'success');
@@ -475,23 +470,19 @@ async function buscarProdutoPorId(button) {
     }
 }
 
-
 // Função para coletar os dados de uma nova linha e enviar ao servidor para criação.
 function btnAdicionarItem(button) {
-    // Encontra a linha (<tr>) pai do botão.
     const row = button.closest('tr');
     if (!row) {
         console.error("Erro: Não foi possível encontrar a linha da tabela (<tr>).");
         return;
     }
 
-    // Coleta os dados dos inputs da linha.
     const pedidoId = row.querySelector('.pedido-id-input').value;
     const produtoId = row.querySelector('.produto-id-input').value;
     const quantidade = row.querySelector('.quantidade-input').value;
     const precoUnitario = row.querySelector('.preco-input').value;
 
-    // Converte os valores para os tipos corretos.
     const itemData = {
         id_pedido: parseInt(pedidoId),
         id_produto: parseInt(produtoId),
@@ -499,15 +490,13 @@ function btnAdicionarItem(button) {
         preco_unitario: parseFloat(precoUnitario.replace(',', '.'))
     };
 
-    // Valida os dados antes do envio.
     if (isNaN(itemData.id_pedido) || isNaN(itemData.id_produto) || isNaN(itemData.quantidade) || isNaN(itemData.preco_unitario)) {
         mostrarMensagem('Por favor, preencha todos os campos corretamente.', 'warning');
         return;
     }
 
-    // Envia os dados para a API usando fetch.
     fetch(`${API_BASE_URL}/pedidoproduto`, {
-        method: 'POST', // Método para criar um novo recurso.
+        method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
@@ -521,23 +510,19 @@ function btnAdicionarItem(button) {
         })
         .then(data => {
             mostrarMensagem('Item adicionado com sucesso!', 'success');
-
-            // atualizar a interface para refletir o sucesso, 
             buscarPedido();
+            atualizarValorTotal();
         })
         .catch(error => {
             console.error('Erro:', error);
             mostrarMensagem(error.message, 'error');
         });
-
 }
 
-// Função para cancelar a adição de um novo item, removendo a linha da tabela.
+// Função para cancelar a adição de um novo item
 function btnCancelarItem(button) {
-    // 1. Encontra a linha (<tr>) pai do botão que foi clicado.
     const row = button.closest('tr');
 
-    // 2. Verifica se a linha foi encontrada e a remove.
     if (row) {
         row.remove();
         mostrarMensagem('Adição do item cancelada.', 'info');
@@ -547,30 +532,21 @@ function btnCancelarItem(button) {
 }
 
 function btnAtualizarItem(button) {
-    // 1. Encontra a linha (<tr>) pai do botão que foi clicado.
-    // O 'closest' é um método muito útil para encontrar o ancestral mais próximo com o seletor especificado.
     const row = button.closest('tr');
 
-    // Se a linha não for encontrada, algo está errado, então saímos da função.
     if (!row) {
         console.error("Erro: Não foi possível encontrar a linha da tabela (<tr>).");
         return;
     }
 
-    // 2. Pega todas as células (<td>) da linha.   
     const cells = Array.from(row.cells);
 
-    // 3. Extrai os dados de cada célula da linha.
-    // Como sua tabela tem uma estrutura fixa, podemos usar os índices para pegar os dados.
-    // Lembre-se que os índices de arrays começam em 0.
     const pedidoId = cells[0].textContent;
     const produtoId = cells[1].textContent;
     const nomeProduto = cells[2].textContent;
     const quantidade = cells[3].querySelector('input').value;
     const precoUnitario = cells[4].querySelector('input').value;
 
-
-    // 4. Converte os valores para os tipos de dados corretos, se necessário.
     const itemData = {
         id_pedido: parseInt(pedidoId),
         id_produto: parseInt(produtoId),
@@ -579,22 +555,15 @@ function btnAtualizarItem(button) {
         preco_unitario: parseFloat(precoUnitario.replace(',', '.'))
     };
 
-    // 5. Valida os dados antes de enviar (opcional, mas recomendado).
     if (isNaN(itemData.id_pedido) || isNaN(itemData.id_produto) || isNaN(itemData.quantidade) || isNaN(itemData.preco_unitario)) {
         mostrarMensagem('Por favor, preencha todos os campos corretamente.', 'warning');
         return;
     }
 
-    // remover o nome do produto do envio, pois é desnecessário
     delete itemData.nome_produto;
 
-    //alert("Dados do item a serem salvos:" + JSON.stringify(itemData));
-
-    // 6. Envia os dados para o backend usando fetch.
-    // Ajuste a URL e o método conforme sua API. router.put('/:id_pedido/:id_produto', pedidoprodutoController.atualizarPedidoproduto);
-    // Note que estamos enviando tanto o id do pedido quanto o id do produto na URL.
     fetch(`${API_BASE_URL}/pedidoproduto/${itemData.id_pedido}/${itemData.id_produto}`, {
-        method: 'PUT', // para atualizar
+        method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
         },
@@ -608,18 +577,15 @@ function btnAtualizarItem(button) {
         })
         .then(data => {
             mostrarMensagem('Item salvo com sucesso!', 'success');
-            // Aqui você pode atualizar a UI, limpar campos, etc.
+            atualizarValorTotal();
         })
         .catch(error => {
             console.error('Erro:', error);
             mostrarMensagem(error.message, 'error');
         });
-
-
 }
 
 function btnExcluirItem(button) {
-    // 1. Encontra a linha (<tr>) pai do botão que foi clicado.
     const row = button.closest('tr');
 
     if (!row) {
@@ -627,37 +593,29 @@ function btnExcluirItem(button) {
         return;
     }
 
-    // 2. Extrai os IDs do pedido e do produto da linha, que compõem a chave primária.
     const pedidoId = row.cells[0].textContent;
     const produtoId = row.cells[1].textContent;
 
-    // 3. Valida os dados antes de enviar.
     if (isNaN(parseInt(pedidoId)) || isNaN(parseInt(produtoId))) {
         mostrarMensagem('IDs do pedido ou produto inválidos.', 'warning');
         return;
     }
 
-    // 4. Pergunta ao usuário para confirmar a exclusão.
-    // Isso evita exclusões acidentais.
     if (!confirm(`Tem certeza que deseja excluir o item do produto ${produtoId} do pedido ${pedidoId}?`)) {
-        return; // Sai da função se o usuário cancelar
+        return;
     }
 
-    // 5. Envia a requisição DELETE para a API.
-    // A rota DELETE espera os IDs na URL para identificar o item.
     fetch(`${API_BASE_URL}/pedidoproduto/${pedidoId}/${produtoId}`, {
-        method: 'DELETE', // O método HTTP para exclusão
+        method: 'DELETE',
     })
         .then(response => {
-            if (response.ok) { // A requisição foi bem-sucedida (status 204)
-                // 6. Se a exclusão no backend foi bem-sucedida, remove a linha da tabela na interface.
+            if (response.ok) {
                 row.remove();
                 mostrarMensagem('Item excluído com sucesso!', 'success');
+                atualizarValorTotal();
             } else if (response.status === 404) {
-                // Se o item não for encontrado, informa o usuário.
                 mostrarMensagem('Erro: Item não encontrado no servidor.', 'error');
             } else {
-                // Para outros erros, lança uma exceção.
                 throw new Error('Erro ao excluir o item do pedido.');
             }
         })
