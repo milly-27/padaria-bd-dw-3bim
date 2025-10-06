@@ -288,7 +288,7 @@ function renderizerTabelaItensPedido(itens) {
             <td>
                 <input type="number" class="preco-input" data-index="${index}" 
                        value="${item.preco_unitario}" min="0" step="0.01">
-            </td>                               
+            </td>                           
             <td class="subtotal-cell">${subTotal}</td> 
             <td>
                <button class="btn-secondary btn-small" onclick="btnAtualizarItem(this)">Atualizar</button>
@@ -448,7 +448,7 @@ async function buscarProdutoPorId(button) {
 
     try {
         //const response = await fetch(`${API_BASE_URL}/pedido/${id}`);
-        const response = await fetch(`${API_BASE_URL}/produto/${produtoId}`);
+        const response = await fetch(`${API_BASE_URL}/produtos/${produtoId}`);
         if (!response.ok) {
             throw new Error('Produto não encontrado.');
         }
@@ -459,7 +459,7 @@ async function buscarProdutoPorId(button) {
 
 
         const precoInput = row.querySelector('.preco-input');
-        precoInput.value = produto.preco_unitario;
+        precoInput.value = produto.preco;
 
         const nome_produtoInput = row.querySelector('td:nth-child(3) span');
         nome_produtoInput.innerHTML = produto.nome_produto;
@@ -521,15 +521,15 @@ function btnAdicionarItem(button) {
         })
         .then(data => {
             mostrarMensagem('Item adicionado com sucesso!', 'success');
-            
+
             // atualizar a interface para refletir o sucesso, 
-              buscarPedido();
+            buscarPedido();
         })
         .catch(error => {
             console.error('Erro:', error);
             mostrarMensagem(error.message, 'error');
         });
-        
+
 }
 
 // Função para cancelar a adição de um novo item, removendo a linha da tabela.
@@ -574,12 +574,10 @@ function btnAtualizarItem(button) {
     const itemData = {
         id_pedido: parseInt(pedidoId),
         id_produto: parseInt(produtoId),
-        nome_produto: nomeProduto.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, " "), // Sanitiza e remove quebras de linha  
+        nome_produto: nomeProduto.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, " "),
         quantidade: parseInt(quantidade),
         preco_unitario: parseFloat(precoUnitario.replace(',', '.'))
     };
-
-    //  alert("Dados do item a serem salvos:" + JSON.stringify(itemData));
 
     // 5. Valida os dados antes de enviar (opcional, mas recomendado).
     if (isNaN(itemData.id_pedido) || isNaN(itemData.id_produto) || isNaN(itemData.quantidade) || isNaN(itemData.preco_unitario)) {

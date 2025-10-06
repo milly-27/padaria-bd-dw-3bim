@@ -27,11 +27,10 @@ exports.listarPedidoprodutos = async (req, res) => {
 // Função para criar um novo item de pedido no banco de dados.
 exports.criarPedidoproduto = async (req, res) => {
   try {
-    const { pedido_id_pedido, produto_id_produto, quantidade, preco_unitario } = req.body;
-
+    const { id_pedido, id_produto, quantidade, preco_unitario } = req.body;
     // Verifica se os dados necessários foram fornecidos.
-    if (!pedido_id_pedido || !produto_id_produto || !quantidade || !preco_unitario) {
-      return res.status(400).json({ error: 'Todos os campos são obrigatórios: pedido_id_pedido, produto_id_produto, quantidade, preco_unitario.' });
+    if (!id_pedido || !id_produto || !quantidade || !preco_unitario) {
+      return res.status(400).json({ error: 'Todos os campos são obrigatórios: id_pedido, id_produto, quantidade, preco_unitario.' });
     }
 
     // Você pode adicionar mais verificações aqui, por exemplo,
@@ -40,7 +39,7 @@ exports.criarPedidoproduto = async (req, res) => {
     // Executa a query de inserção com os nomes corretos das colunas
     const result = await query(
       'INSERT INTO pedidoproduto (id_pedido, id_produto, quantidade, preco_unitario) VALUES ($1, $2, $3, $4) RETURNING *',
-      [pedido_id_pedido, produto_id_produto, quantidade, preco_unitario]
+      [id_pedido, id_produto, quantidade, preco_unitario]
     );
 
 
