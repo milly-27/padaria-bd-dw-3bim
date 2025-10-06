@@ -408,3 +408,53 @@ footer {
         padding: 8px 4px;
     }
 }
+
+
+/* Adicione este novo estilo ao final do seu arquivo CSS */
+
+/* NOVO: Container para o campo de senha e o ícone */
+.password-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Ajusta o input de senha para não sobrepor o ícone */
+.password-container input {
+    padding-right: 40px; /* Adiciona espaço à direita para o ícone */
+}
+
+/* Estilo para o ícone do olho */
+.password-container .toggle-password {
+    position: absolute;
+    right: 10px; /* Posição do ícone */
+    cursor: pointer;
+    color: #6d4c41; /* Cor do ícone */
+    font-size: 1.2rem;
+}
+
+
+
+/* Adicione este novo estilo ao final do seu arquivo CSS */
+
+/* NOVO: Container para o campo de senha e o ícone */
+.password-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Ajusta o input de senha para não sobrepor o ícone */
+.password-container input {
+    padding-right: 40px; /* Adiciona espaço à direita para o ícone */
+}
+
+/* Estilo para o ícone do olho */
+.password-container .toggle-password {
+    position: absolute;
+    right: 10px; /* Posição do ícone */
+    cursor: pointer;
+    color: #6d4c41; /* Cor do ícone */
+    font-size: 1.2rem;
+}
+

@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRUD - Pessoa</title>
     <link rel="stylesheet" href="/pessoa/pessoa.css">
+    <!-- NOVO: Referência ao Font Awesome para o ícone de olho -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 
 <body>
@@ -21,7 +23,7 @@
                 <div class="search-container">
                     <label for="searchId">Buscar por CPF:</label>
                     <div class="search-input-group">
-                        <input type="text" id="searchId" placeholder="Digite o CPF para buscar">
+                        <input type="text" id="searchId" placeholder="Digite o CPF para buscar" maxlength="11">
                         <button type="button" id="btnBuscar">🔍 Buscar</button>
 
                         <button type="button" id="btnIncluir" class="btn-primary">Incluir</button>
@@ -46,9 +48,13 @@
                         <input type="email" id="email_pessoa" name="email_pessoa" required>
                     </div>
 
+                    <!-- NOVO: Campo de Senha com o ícone de visualização -->
                     <div class="form-group">
                         <label for="senha_pessoa">Senha:</label>
-                        <input type="password" id="senha_pessoa" name="senha_pessoa" required>
+                        <div class="password-container">
+                            <input type="password" id="senha_pessoa" name="senha_pessoa">
+                            <i class="fas fa-eye toggle-password" id="toggleSenha"></i>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="cpf_pessoa">CPF:</label>
