@@ -1,13 +1,25 @@
-/* Reset e configurações básicas */
+/* login.css - Tema Padaria */
+
+/* Reset Básico */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+:root {
+    /* Cores do Tema Padaria */
+    --cor-fundo-geral: #F8F4E3; /* Creme/Trigo claro para o fundo da página */
+    --cor-card-fundo: #FFFFFF; /* Branco puro para o card */
+    --cor-primaria-padaria: #A0522D; /* Marrom suave (cor de canela/casca de pão) */
+    --cor-secundaria-padaria: #D2B48C; /* Bege claro (massa/farinha) */
+    --cor-texto-escuro: #333;
+    --cor-link-acao: #B8860B; /* Dourado/Caramelo */
+}
+
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #6d4c41, #4e342e, #d7a86e);
+    font-family: 'Inter', sans-serif;
+    background-color: var(--cor-fundo-geral);
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -15,195 +27,202 @@ body {
     padding: 20px;
 }
 
-.login-container {
+/* Container Principal - Layout Flexível */
+.container {
     width: 100%;
-    max-width: 400px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    max-width: 900px; /* Aumenta a largura para acomodar as duas seções lado a lado */
+    padding: 0; /* Remove padding desnecessário */
 }
 
 .login-card {
-    background: #f9f4ef;
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: 0 8px 32px rgba(78, 52, 46, 0.3);
-    border: 1px solid #e6dfd8;
-    width: 100%;
-    animation: slideIn 0.5s ease-out;
+    background: var(--cor-card-fundo);
+    border-radius: 16px; /* Cantos arredondados */
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    display: flex; /* Habilita o layout de duas colunas */
+    min-height: 550px;
 }
 
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.login-header {
+/* Coluna da Logo (Estilização de fundo) */
+.logo {
+    flex: 1;
+    background: linear-gradient(145deg, var(--cor-primaria-padaria) 0%, #CD853F 100%); /* Gradiente quente */
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    margin-bottom: 2rem;
+    padding: 40px;
+    box-shadow: inset -5px 0 15px rgba(0, 0, 0, 0.1);
 }
 
-.login-header h1 {
-    font-size: 2.5rem;
-    color: #4e342e;
-    margin-bottom: 0.5rem;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+.logo h1 {
+    font-size: 3em;
+    margin-bottom: 5px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-.login-header h2 {
-    font-size: 1.5rem;
-    color: #6d4c41;
-    font-weight: 400;
+.logo p {
+    font-size: 1.2em;
+    opacity: 0.9;
+    font-style: italic;
 }
 
-.login-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+/* Conteúdo da Aba (Formulários) */
+.form-content-area {
+    flex: 1;
+    padding: 40px;
+    position: relative;
+    /* Remove a animação 'slideUp' que pode conflitar com o layout flex */
 }
 
+.tab-content {
+    /* Manter a transição para quando for ativado pelo JS */
+    opacity: 0;
+    position: absolute;
+    width: calc(100% - 80px); /* 100% menos o padding de 40px de cada lado */
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    top: 40px;
+    left: 40px;
+    visibility: hidden;
+}
+
+.tab-content.active {
+    opacity: 1;
+    visibility: visible;
+    position: relative; /* Volta ao fluxo normal quando ativo */
+    transform: none;
+}
+
+/* Oculta os não-ativos fora da tela (para o efeito de transição) */
+#login-tab:not(.active) {
+    transform: translateX(-100%);
+}
+#register-tab:not(.active) {
+    transform: translateX(100%);
+}
+
+
+.tab-content h2 {
+    text-align: center;
+    color: var(--cor-primaria-padaria);
+    margin-bottom: 25px;
+    font-size: 1.8em;
+    font-weight: 700;
+}
+
+/* Grupos de Formulário e Inputs */
 .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    margin-bottom: 18px;
 }
 
 .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--cor-texto-escuro);
     font-weight: 600;
-    color: #4e342e;
-    font-size: 1rem;
+    font-size: 0.95em;
 }
 
 .form-group input {
-    padding: 1rem;
-    border: 2px solid #e6dfd8;
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #E0DED7; /* Borda suave */
     border-radius: 8px;
-    font-size: 1rem;
+    font-size: 16px;
     transition: all 0.3s ease;
-    background: white;
+    background: var(--cor-fundo-geral);
 }
 
 .form-group input:focus {
     outline: none;
-    border-color: #d7a86e;
-    box-shadow: 0 0 0 3px rgba(215, 168, 110, 0.25);
-    background: #fefcf9;
+    border-color: var(--cor-link-acao);
+    background: var(--cor-card-fundo);
+    box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.2); /* Sombra do caramelo */
 }
 
-.btn-login {
-    padding: 1rem 2rem;
-    background: linear-gradient(135deg, #eacda3, #d7a86e);
-    color: #4e342e;
+/* Botões */
+.btn-login, .btn-register {
+    width: 100%;
+    padding: 14px;
+    background: var(--cor-primaria-padaria);
+    color: white;
     border: none;
     border-radius: 8px;
-    font-size: 1.1rem;
+    font-size: 1.1em;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin-top: 1rem;
+    margin-top: 15px;
+    box-shadow: 0 5px 15px rgba(160, 82, 45, 0.3);
 }
 
-.btn-login:hover {
-    background: linear-gradient(135deg, #d7a86e, #c69758);
+.btn-login:hover, .btn-register:hover {
+    background: #CD853F; /* Um pouco mais claro no hover */
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(215, 168, 110, 0.35);
+    box-shadow: 0 8px 20px rgba(160, 82, 45, 0.4);
 }
 
-.btn-login:active {
-    transform: translateY(0);
-}
-
-.login-footer {
+/* Links de Troca (Login/Cadastro) */
+.register-link, .login-link {
     text-align: center;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #e6dfd8;
+    margin-top: 25px;
+    font-size: 0.95em;
+    color: var(--cor-texto-escuro);
 }
 
-.login-footer p {
-    margin-bottom: 0.5rem;
-    color: #6d4c41;
-}
-
-.login-footer a {
-    color: #d7a86e;
+.register-link a, .login-link a {
+    color: var(--cor-link-acao);
     text-decoration: none;
-    font-weight: 600;
-    transition: color 0.3s ease;
+    font-weight: 700;
 }
 
-.login-footer a:hover {
-    color: #c69758;
+.register-link a:hover, .login-link a:hover {
     text-decoration: underline;
+    color: var(--cor-primaria-padaria);
 }
 
-/* Mensagens */
-#messageContainer {
-    margin-top: 1rem;
+/* Esconde as tabs/buttons do seu exemplo anterior, já que o foco é o split */
+.login-tabs, .tab-btn {
+    display: none !important;
 }
 
-.message {
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    font-weight: 500;
-    text-align: center;
-    animation: fadeIn 0.3s ease;
-}
-
-.message.success {
-    background: linear-gradient(135deg, #e6dfd8, #f9f4ef);
-    color: #4e342e;
-    border: 1px solid #d7a86e;
-}
-
-.message.error {
-    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
-    color: #6d1a1a;
-    border: 1px solid #f5c6cb;
-}
-
-.message.info {
-    background: linear-gradient(135deg, #e0dede, #f9f4ef);
-    color: #3e2723;
-    border: 1px solid #d7ccc8;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Responsividade */
-@media (max-width: 480px) {
+/* Responsividade (Abaixo de 768px, as colunas empilham) */
+@media (max-width: 768px) {
     .login-card {
-        padding: 1.5rem;
-        margin: 1rem;
+        flex-direction: column;
+        min-height: auto;
+    }
+
+    .logo {
+        height: 150px; /* Altura fixa para o topo */
+        padding: 20px;
+        border-radius: 16px 16px 0 0;
     }
     
-    .login-header h1 {
-        font-size: 2rem;
+    .logo h1 {
+        font-size: 2em;
     }
     
-    .login-header h2 {
-        font-size: 1.2rem;
+    .logo p {
+        font-size: 1em;
+    }
+
+    .form-content-area {
+        padding: 30px;
+    }
+
+    /* Ajuste para o layout empilhado */
+    .tab-content {
+        width: 100%;
+        left: 0;
+        top: 0;
     }
     
-    .form-group input,
-    .btn-login {
-        padding: 0.8rem;
-        font-size: 1rem;
+    /* Remove a transição horizontal nos dispositivos móveis para melhor UX */
+    #login-tab:not(.active),
+    #register-tab:not(.active) {
+        transform: none;
     }
 }

@@ -1,239 +1,184 @@
 const API_BASE_URL = 'http://localhost:3001';
 
-console.log('=== SCRIPT CARREGADO ===');
-console.log('URL da API:', API_BASE_URL);
-
-// Elementos do DOM
-const loginForm = document.getElementById('loginForm');
-const emailInput = document.getElementById('email');
-const senhaInput = document.getElementById('senha');
-const messageContainer = document.getElementById('messageContainer');
-
-console.log('Elementos encontrados:', {
-    loginForm: !!loginForm,
-    emailInput: !!emailInput,
-    senhaInput: !!senhaInput,
-    messageContainer: !!messageContainer
-});
-
-// Event Listeners
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('=== DOM CARREGADO ===');
-    verificarSeEstaLogado();
-    if (emailInput) {
-        emailInput.focus();
-    }
-});
-
-if (loginForm) {
-    loginForm.addEventListener('submit', fazerLogin);
+// Função para mostrar formulário de login
+function showLogin() {
+    document.getElementById('login-tab').classList.add('active');
+    document.getElementById('register-tab').classList.remove('active');
 }
 
-// Função para verificar se o usuário já está logado
-async function verificarSeEstaLogado() {
-    console.log('=== VERIFICANDO SE ESTÁ LOGADO ===');
-    try {
-        const url = `${API_BASE_URL}/login/verificar-login`; // Rota atualizada
-        console.log('Tentando acessar:', url);
-        
-        const response = await fetch(url, {       
-            method: 'GET',
-            credentials: 'include' // Importante para enviar cookies
-        });
-        
-        console.log('Status verificar login:', response.status);
-        
-        if (response.ok) {
-            const data = await response.json();
-            console.log('Dados verificar login:', data);
-            
-            if (data.logado) {
-                // Se já estiver logado, redireciona para o menu
-                mostrarMensagem(`Bem-vindo de volta, ${data.usuario.nome_pessoa}! Redirecionando...`, 'success');
-                // Salva os dados do usuário no localStorage
-                localStorage.setItem('usuarioLogado', JSON.stringify(data.usuario));
-                setTimeout(() => {
-                    window.location.href = '../menu.html';
-                }, 1000);
-                return;
-            }
+// Função para mostrar formulário de cadastro
+function showRegister() {
+    document.getElementById('login-tab').classList.remove('active');
+    document.getElementById('register-tab').classList.add('active');
+}
+
+// Função para mostrar alertas
+function showAlert(message, type = 'error') {
+    // Remover alertas existentes
+    const existingAlert = document.querySelector('.alert');
+    if (existingAlert) {
+        existingAlert.remove();
+    }
+    
+    // Criar novo alerta
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type}`;
+    alert.textContent = message;
+    
+    // Inserir no início do formulário ativo
+    const activeTab = document.querySelector('.tab-content.active');
+    activeTab.insertBefore(alert, activeTab.firstChild);
+    
+    // Remover alerta após 5 segundos
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
         }
-    } catch (error) {
-        console.error('=== ERRO AO VERIFICAR LOGIN ===');
-        console.error('Erro:', error);
-        // Continua normal se não conseguir verificar (usuário não logado)
+    }, 5000);
+}
+
+// Função para mostrar loading
+function showLoading(show = true) {
+    const loading = document.querySelector('.loading');
+    if (loading) {
+        loading.style.display = show ? 'block' : 'none';
     }
 }
 
-// Função para mostrar mensagens
-function mostrarMensagem(texto, tipo = 'info') {
-    console.log('Mostrando mensagem:', texto, 'Tipo:', tipo);
+// Login Unificado
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
     
-    if (messageContainer) {
-        messageContainer.innerHTML = `<div class="message ${tipo}">${texto}</div>`;
-        
-        // Auto-remover mensagem após 5 segundos
-        setTimeout(() => {
-            if (messageContainer.innerHTML.includes(texto)) {
-                messageContainer.innerHTML = '';
-            }
-        }, 5000);
-    } else {
-        console.error('messageContainer não encontrado!');
-        alert(texto); // Fallback
-    }
-}
-
-// Função para fazer login
-async function fazerLogin(event) {
-    event.preventDefault();
-    console.log('=== INICIANDO LOGIN ===');
+    const formData = new FormData(e.target);
+    const data = {
+        email_pessoa: formData.get('email'),
+        senha_pessoa: formData.get('senha')
+    };
     
-    const email = emailInput ? emailInput.value.trim() : '';
-    const senha = senhaInput ? senhaInput.value.trim() : '';
-
-    console.log('Dados do login:', { email, senha: senha ? '[SENHA INFORMADA]' : '[SEM SENHA]' });
-    console.log('URL da API:', API_BASE_URL);
-
-    // Validação básica
-    if (!email || !senha) {
-        console.log('Validação falhou: campos vazios');
-        mostrarMensagem('Por favor, preencha todos os campos!', 'error');
-        return;
-    }
-
-    // Validação de email
-    const emailRegex = /^[\S+@\S+\.\S+]+$/;
-    if (!emailRegex.test(email)) {
-        console.log('Validação falhou: email inválido');
-        mostrarMensagem('Por favor, digite um email válido!', 'error');
-        return;
-    }
-
     try {
-        mostrarMensagem('Verificando credenciais...', 'info');
+        showLoading(true);
         
-        const url = `${API_BASE_URL}/login/login`; // Rota atualizada
-        console.log('URL de login:', url);
-        console.log('Iniciando requisição fetch...');
-        
-        const requestData = { email_pessoa: email, senha_pessoa: senha }; // Nomes dos campos atualizados
-        console.log('Dados da requisição:', { ...requestData, senha_pessoa: '[OCULTA]' });
-        
-        const response = await fetch(url, {
+        // Tenta login primeiro como cliente
+        let response = await fetch(`${API_BASE_URL}/login/loginCliente`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
-            credentials: 'include', // Importante para receber cookies
-            body: JSON.stringify(requestData)
+            credentials: 'include',
+            body: JSON.stringify(data)
         });
-
-        console.log('=== RESPOSTA RECEBIDA ===');
-        console.log('Status:', response.status);
-        console.log('StatusText:', response.statusText);
-        console.log('Headers:', response.headers);
         
-        const data = await response.json();
-        console.log('Dados da resposta:', data);
-
-        if (response.ok && data.success) {
-            console.log('=== LOGIN SUCESSO ===');
-            // Login bem-sucedido
-            mostrarMensagem('Login realizado com sucesso!', 'success');
+        let result = await response.json();
+        
+        // Se não for cliente, tenta como funcionário
+        if (result.status !== 'ok') {
+            response = await fetch(`${API_BASE_URL}/login/loginFuncionario`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify(data)
+            });
             
-            // Salvar dados no localStorage
-            const userData = {
-                cpf: data.usuario.cpf,
-                nome: data.usuario.nome_pessoa,
-                email: data.usuario.email_pessoa
-            };
-            
-            console.log('Salvando dados no localStorage:', userData);
-            localStorage.setItem('usuarioLogado', JSON.stringify(userData));
-
-            // Redirecionar após 1.5 segundos
+            result = await response.json();
+        }
+        
+        if (result.status === 'ok') {
+            showAlert('Login realizado com sucesso!', 'success');
             setTimeout(() => {
-                console.log('Redirecionando para menu...');
                 window.location.href = '../menu.html';
             }, 1500);
-            
-        } else if (response.status === 404) {
-            console.log('=== USUÁRIO NÃO ENCONTRADO ===');
-            mostrarMensagem('Usuário não encontrado. Deseja se cadastrar?', 'warning');
-            setTimeout(() => {
-                if (confirm('Usuário não encontrado. Deseja ir para a página de cadastro?')) {
-                    window.location.href = 'cadastro.html';
-                }
-            }, 2000);
-            
-        } else if (response.status === 401) {
-            console.log('=== SENHA INCORRETA ===');
-            mostrarMensagem('Email ou senha incorretos!', 'error');
-            if (senhaInput) {
-                senhaInput.focus();
-                senhaInput.select();
-            }
-            
         } else {
-            console.log('=== OUTRO ERRO ===');
-            mostrarMensagem(data.message || 'Erro ao fazer login. Tente novamente.', 'error');
+            showAlert('Email ou senha incorretos!', 'error');
         }
-        
     } catch (error) {
-        console.error('=== ERRO DE CONEXÃO ===');
-        console.error('Erro completo:', error);
-        console.error('Tipo do erro:', typeof error);
-        console.error('Nome do erro:', error.name);
-        console.error('Mensagem do erro:', error.message);
-        console.error('Stack:', error.stack);
-        
-        // Verificar se é erro de rede
-        if (error instanceof TypeError && (error.message.includes('fetch') || error.message.includes('NetworkError'))) {
-            mostrarMensagem('Servidor não está respondendo. Verifique se está rodando na porta 3001.', 'error');
-        } else if (error.name === 'SyntaxError') {
-            mostrarMensagem('Erro ao processar resposta do servidor. Verifique o console para mais detalhes.', 'error');
-        } else {
-            mostrarMensagem('Erro de conexão com o servidor. Tente novamente.', 'error');
-        }
+        console.error('Erro no login:', error);
+        showAlert('Erro ao fazer login. Tente novamente.', 'error');
+    } finally {
+        showLoading(false);
     }
-}
+});
 
-// Navegação com Enter
-if (emailInput) {
-    emailInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            if (senhaInput) {
-                senhaInput.focus();
-            }
+// Cadastro
+document.getElementById('cadastroForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = {
+        cpf: formData.get('cpf'),
+        nome_pessoa: formData.get('nome'),
+        email_pessoa: formData.get('email'),
+        senha_pessoa: formData.get('senha')
+    };
+    
+    // Validação simples de CPF (apenas números e 11 dígitos)
+    if (data.cpf.length !== 11) {
+        showAlert('CPF deve conter 11 dígitos!', 'error');
+        return;
+    }
+    
+    // Validação de senha
+    if (data.senha_pessoa.length > 20) {
+        showAlert('Senha deve ter no máximo 20 caracteres!', 'error');
+        return;
+    }
+    
+    try {
+        showLoading(true);
+        
+        const response = await fetch(`${API_BASE_URL}/login/cadastrarCliente`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            showAlert('Cadastro realizado com sucesso!', 'success');
+            setTimeout(() => {
+                showLogin();
+                // Limpar formulário
+                e.target.reset();
+            }, 2000);
+        } else {
+            showAlert(result.error || 'Erro ao cadastrar. Tente novamente.', 'error');
         }
-    });
-}
+    } catch (error) {
+        console.error('Erro no cadastro:', error);
+        showAlert('Erro ao cadastrar. Tente novamente.', 'error');
+    } finally {
+        showLoading(false);
+    }
+});
 
-if (senhaInput) {
-    senhaInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            fazerLogin(e);
+// Máscara para CPF (apenas números)
+document.getElementById('regCpf').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    // Limitar a 11 dígitos
+    if (value.length > 11) {
+        value = value.substring(0, 11);
+    }
+    e.target.value = value;
+});
+
+// Verificar se já está logado
+window.addEventListener('load', async () => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/login/verificaSePessoaEstaLogada`, {
+            credentials: 'include'
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            // Pessoa já está logada, redirecionar para menu
+            window.location.href = '../menu.html';
         }
-    });
-}
-
-// Funções utilitárias
-function limparFormulario() {
-    if (emailInput) emailInput.value = '';
-    if (senhaInput) senhaInput.value = '';
-    if (emailInput) emailInput.focus();
-}
-
-function irParaCadastro() {
-    window.location.href = 'cadastro.html';
-}
-
-function voltarAoMenu() {
-    window.location.href = '../menu.html';
-}
-
-console.log('=== SCRIPT FINALIZADO ===');
-
+    } catch (error) {
+        console.error('Erro ao verificar login:', error);
+    }
+});

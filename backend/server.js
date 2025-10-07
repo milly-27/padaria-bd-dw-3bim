@@ -3,6 +3,7 @@ const app = express();
 const path = require('path');
 
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
 
 // Importar a configuração do banco PostgreSQL
 const db = require('./database'); // Ajuste o caminho conforme necessário
@@ -33,22 +34,53 @@ app.use(cookieParser());
 // ou porta do backend.
 // Em produção, você deve restringir isso para domínios específicos por segurança.
 // Aqui, estamos permitindo qualquer origem, o que é útil para desenvolvimento, mas deve ser ajustado em produção.
-app.use((req, res, next) => {
-  const allowedOrigins = ['http://127.0.0.1:5500','http://localhost:5500', 'http://127.0.0.1:5501', 'http://localhost:3000', 'http://localhost:3001'];
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
-  res.header('Access-Control-Allow-Credentials', 'true');
+//app.use((req, res, next) => {
+ // const allowedOrigins = ['http://127.0.0.1:5500','http://localhost:5500', 'http://127.0.0.1:5501', 'http://localhost:3000', 'http://localhost:3001'];
+  //const origin = req.headers.origin;
+ // if (allowedOrigins.includes(origin)) {
+ //   res.header('Access-Control-Allow-Origin', origin);
+ // }
+ // res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+//  res.header('Access-Control-Allow-Headers', 'Content-Type');
+ // res.header('Access-Control-Allow-Credentials', 'true');
 
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200); // <-- responde ao preflight
-  }
+ // if (req.method === 'OPTIONS') {
+ //   return res.sendStatus(200); // <-- responde ao preflight
+ // }
 
-  next();
-});
+ // next();
+//});
+// Middleware CORS — mais seguro e limpo
+// Middleware CORS — corrigido
+const allowedOrigins = [
+  'http://127.0.0.1:5500',
+  'http://localhost:5500',
+  'http://127.0.0.1:5501',
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://127.0.0.1:3002', // ✅ adicionada
+  'http://localhost:3002'  // ✅ por segurança, caso mude a origem
+];
+
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Permite chamadas sem origem (como Postman)
+    if (!origin) return callback(null, true);
+
+    // Verifica se a origem é permitida
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn('⚠️ Origem não permitida pelo CORS:', origin);
+      callback(null, false); // não lança erro, só bloqueia
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 
 // Middleware para adicionar a instância do banco de dados às requisições
 app.use((req, res, next) => {
@@ -113,8 +145,8 @@ app.use('/pessoas', pessoaRoutes);
 const produtoRoutes = require('./routes/produtoRoutes');
 app.use('/produtos', produtoRoutes);
 
-const loginRoutes = require('./routes/loginRoutes'); 
-app.use('/', loginRoutes);
+const loginRoutes = require('./routes/loginRoutes');
+app.use('/login', loginRoutes);
 
 const funcionarioRoutes = require('./routes/funcionarioRoutes');
 app.use('/funcionarios', funcionarioRoutes);
@@ -144,8 +176,7 @@ app.use('/forma_pagamentos', forma_pagamentoRoutes);
 const pagamento_has_formapagamentoRoutes = require('./routes/pagamento_has_formapagamentoRoutes');
 app.use('/pagamento_has_formapagamentos', pagamento_has_formapagamentoRoutes);
 
-const cadastroRoutes = require("./routes/cadastroRoutes");
-app.use("/cadastro", cadastroRoutes);
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
