@@ -188,6 +188,95 @@ body {
     display: none !important;
 }
 
+/* Alertas de erro e sucesso */
+.alert {
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-weight: 600;
+    font-size: 0.95em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideInDown 0.4s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideOutUp {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+.alert::before {
+    font-size: 1.5em;
+}
+
+.alert-error {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    color: white;
+    border-left: 5px solid #c92a2a;
+}
+
+.alert-error::before {
+    content: '⚠️';
+}
+
+.alert-success {
+    background: linear-gradient(135deg, #51cf66, #37b24d);
+    color: white;
+    border-left: 5px solid #2b8a3e;
+}
+
+.alert-success::before {
+    content: '✅';
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, #ffd43b, #fab005);
+    color: #333;
+    border-left: 5px solid #f08c00;
+}
+
+.alert-warning::before {
+    content: '⚡';
+}
+
+/* Loading spinner */
+.loading {
+    display: none;
+    text-align: center;
+    padding: 10px;
+    color: var(--cor-primaria-padaria);
+}
+
+.loading::after {
+    content: '⏳';
+    font-size: 1.5em;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 /* Responsividade (Abaixo de 768px, as colunas empilham) */
 @media (max-width: 768px) {
     .login-card {

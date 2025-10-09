@@ -4,12 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carrinho de Compras - Padaria</title>
-    <link rel="stylesheet" href="carrinho.css">
+    <link rel="stylesheet" href="/carrinho/carrinho.css">
 </head>
 <body>
     <div class="container">
         <header class="header">
-            <h1>🛒 Carrinho de Compras</h1>
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <h1>🛒 Carrinho de Compras</h1>
+                <div id="usuarioInfo" style="background: #2c3e50; padding: 10px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <span style="font-weight: bold; color: #fff;">👤</span>
+                    <span id="nomeUsuario" style="color: #fff; font-weight: bold;">Carregando...</span>
+                </div>
+            </div>
             <nav class="nav-buttons">
                 <button onclick="window.location.href='../cardapio/cardapio.html'" class="btn btn-secondary">
                     ← Voltar ao Cardápio

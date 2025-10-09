@@ -2,17 +2,28 @@ const db = require('../database.js');
 
 // Verificar se pessoa está logada
 exports.verificaSePessoaEstaLogada = (req, res) => {
+  console.log('========================================');
   console.log('loginController - Acessando rota /verificaSePessoaEstaLogada');
+  console.log('Todos os cookies recebidos:', req.cookies);
+  
   let nome = req.cookies.pessoaLogada;
   let tipo = req.cookies.tipoPessoa;
   let cargo = req.cookies.cargoPessoa;
+  let cpf = req.cookies.idPessoa;
+  
   console.log('Cookie pessoaLogada:', nome);
   console.log('Cookie tipoPessoa:', tipo);
   console.log('Cookie cargoPessoa:', cargo);
+  console.log('Cookie idPessoa (CPF):', cpf);
   
   if (nome) {
-    res.json({ status: 'ok', nome, tipo, cargo });
+    const resposta = { status: 'ok', nome, tipo, cargo, cpf };
+    console.log('Enviando resposta:', resposta);
+    console.log('========================================');
+    res.json(resposta);
   } else {
+    console.log('Nenhum cookie encontrado - usuário não logado');
+    console.log('========================================');
     res.json({ status: 'nao_logado' });
   }
 }
@@ -78,7 +89,8 @@ exports.loginCliente = async (req, res) => {
       nome: nome_pessoa,
       email: email,
       tipo: 'cliente',
-      cargo: ''
+      cargo: '',
+      cpf: cpf
     });
 
   } catch (err) {
@@ -92,9 +104,11 @@ exports.loginFuncionario = async (req, res) => {
   const { email_pessoa, senha_pessoa } = req.body;
 
   const sql = `
-    SELECT cpf, nome_pessoa, email_pessoa
-    FROM pessoa
-    WHERE email_pessoa = $1 AND senha_pessoa = $2
+    SELECT p.cpf, p.nome_pessoa, p.email_pessoa, c.nome_cargo
+    FROM pessoa p
+    INNER JOIN funcionario f ON p.cpf = f.cpf
+    INNER JOIN cargo c ON f.id_cargo = c.id_cargo
+    WHERE p.email_pessoa = $1 AND p.senha_pessoa = $2
   `;
 
   console.log('Rota loginFuncionario:', sql, email_pessoa);
@@ -106,7 +120,10 @@ exports.loginFuncionario = async (req, res) => {
       return res.json({ status: 'credenciais_incorretas' });
     }
 
-    const { cpf, nome_pessoa, email_pessoa: email } = result.rows[0];
+    const { cpf, nome_pessoa, email_pessoa: email, nome_cargo } = result.rows[0];
+
+    // Determinar se é gerente
+    const isGerente = nome_cargo && nome_cargo.toLowerCase() === 'gerente';
 
     // Define cookies
     res.cookie('pessoaLogada', nome_pessoa, {
@@ -133,7 +150,7 @@ exports.loginFuncionario = async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    res.cookie('cargoPessoa', '', {
+    res.cookie('cargoPessoa', nome_cargo, {
       sameSite: 'Lax',
       secure: false,
       httpOnly: true,
@@ -141,14 +158,16 @@ exports.loginFuncionario = async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    console.log("Login de funcionário realizado com sucesso");
+    console.log("Login de funcionário realizado com sucesso - Cargo:", nome_cargo, "É gerente:", isGerente);
 
     return res.json({
       status: 'ok',
       nome: nome_pessoa,
       email: email,
       tipo: 'funcionario',
-      cargo: ''
+      cargo: nome_cargo,
+      cpf: cpf,
+      isGerente: isGerente
     });
 
   } catch (err) {
@@ -260,6 +279,8 @@ exports.cadastrarCliente = async (req, res) => {
 
 // Logout
 exports.logout = (req, res) => {
+  const cpf = req.cookies.idPessoa;
+  
   res.clearCookie('pessoaLogada', {
     sameSite: 'Lax',
     secure: false,
@@ -288,6 +309,6 @@ exports.logout = (req, res) => {
     path: '/',
   });
   
-  console.log("Cookies removidos com sucesso");
-  res.json({ status: 'deslogado' });
+  console.log("Cookies removidos com sucesso - CPF:", cpf);
+  res.json({ status: 'deslogado', cpf: cpf });
 }

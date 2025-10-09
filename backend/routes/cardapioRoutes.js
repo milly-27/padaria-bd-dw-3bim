@@ -9,4 +9,3 @@ router.get('/produtos', cardapioController.listarProdutosPorCategoria);
 router.get('/categorias', cardapioController.listarCategorias);
 
 module.exports = router;
-

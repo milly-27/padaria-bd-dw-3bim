@@ -1,5 +1,6 @@
 // Configuração da API
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = 'http://localhost:3001';
+let usuarioLogado = null;
 
 // Elementos do DOM
 const carrinhoVazio = document.getElementById('carrinhoVazio');
@@ -43,12 +44,70 @@ let pedidoAtual = null;
 let formasPagamento = [];
 
 // Inicialização
-document.addEventListener('DOMContentLoaded', () => {
-    carregarCarrinho();
-    carregarFormasPagamento();
-    atualizarInterface();
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🛒 Inicializando carrinho...');
+    usuarioLogado = await verificarLogin();
+    if (usuarioLogado) {
+        await carregarFormasPagamento();
+        await carregarCarrinho();
+        atualizarInterface();
+        
+        // Preencher CPF automaticamente
+        if (usuarioLogado.cpf) {
+            cpfInput.value = formatarCPF(usuarioLogado.cpf);
+            cpfInput.disabled = true; // Bloquear edição do CPF
+        }
+    }
     configurarEventListeners();
 });
+
+// Função para formatar CPF
+function formatarCPF(cpf) {
+    cpf = cpf.replace(/\D/g, '');
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+}
+
+// Verificar se usuário está logado ao carregar a página
+async function verificarLogin() {
+    try {
+        console.log('🔐 Verificando login no carrinho...');
+        const response = await fetch(`${API_BASE_URL}/login/verificaSePessoaEstaLogada`, {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        
+        console.log('📋 Dados do usuário recebidos:', data);
+        
+        if (data.status !== 'ok' || !data.cpf) {
+            // Usuário NÃO está logado
+            console.log('⚠️ Usuário não está logado');
+            if (confirm('⚠️ Você precisa fazer login para acessar o carrinho!\n\nDeseja ir para a página de login?')) {
+                window.location.href = '../login/login.html';
+            } else {
+                window.location.href = '../cardapio/cardapio.html';
+            }
+            return null;
+        }
+        
+        // Atualizar informações do usuário na tela (apenas nome, CPF fica guardado)
+        const nomeElement = document.getElementById('nomeUsuario');
+        if (nomeElement) {
+            nomeElement.textContent = data.nome || 'Usuário';
+            console.log('✅ Nome do usuário atualizado:', data.nome);
+        } else {
+            console.error('❌ Elemento nomeUsuario não encontrado!');
+        }
+        
+        console.log('👤 Usuário logado:', data.nome, '(CPF:', data.cpf, ')');
+        
+        // Usuário está logado
+        return data;
+    } catch (error) {
+        console.error('❌ Erro ao verificar login:', error);
+        alert('⚠️ Erro ao verificar login. Redirecionando...');
+        window.location.href = '../login/login.html';
+    }
+}
 
 // Event Listeners
 function configurarEventListeners() {
@@ -84,7 +143,7 @@ function mostrarMensagem(texto, tipo = 'info') {
 // Função para carregar formas de pagamento do banco
 async function carregarFormasPagamento() {
     try {
-        const response = await fetch(`${API_BASE_URL}/formas-pagamento`);
+        const response = await fetch(`${API_BASE_URL}/forma_pagamentos`);
         if (!response.ok) throw new Error('Erro ao carregar formas de pagamento');
         
         formasPagamento = await response.json();
@@ -104,22 +163,113 @@ async function carregarFormasPagamento() {
     }
 }
 
-// Função para carregar carrinho do localStorage
-function carregarCarrinho() {
-    const carrinhoSalvo = localStorage.getItem('carrinho');
-    if (carrinhoSalvo) {
-        try {
-            carrinho = JSON.parse(carrinhoSalvo);
-        } catch (error) {
-            console.error('Erro ao carregar carrinho:', error);
+// Função para carregar carrinho do banco de dados
+async function carregarCarrinho() {
+    if (!usuarioLogado || !usuarioLogado.cpf) {
+        console.log('⚠️ Usuário não logado');
+        carrinho = [];
+        return;
+    }
+    
+    try {
+        console.log('🛒 Carregando carrinho para CPF:', usuarioLogado.cpf);
+        
+        // Buscar pedidos do usuário da tabela pedido
+        const pedidosResponse = await fetch(`${API_BASE_URL}/pedido/cpf/${usuarioLogado.cpf}`);
+        
+        if (!pedidosResponse.ok) {
+            console.log('⚠️ Nenhum pedido encontrado');
             carrinho = [];
+            pedidoAtual = null;
+            return;
         }
+        
+        const pedidos = await pedidosResponse.json();
+        console.log('📦 Pedidos encontrados:', pedidos);
+        
+        if (!Array.isArray(pedidos) || pedidos.length === 0) {
+            console.log('⚠️ Nenhum pedido no array');
+            carrinho = [];
+            pedidoAtual = null;
+            return;
+        }
+        
+        // Encontrar pedido em aberto (sem pagamento)
+        let pedidoAberto = null;
+        const pagamentoResponse = await fetch(`${API_BASE_URL}/pagamento`);
+        const pagamentos = await pagamentoResponse.json();
+        
+        for (const p of pedidos) {
+            const temPagamento = pagamentos.some(pag => pag.id_pedido === p.id_pedido);
+            
+            if (!temPagamento) {
+                pedidoAberto = p;
+                pedidoAtual = p;
+                console.log('✅ Pedido em aberto encontrado:', pedidoAberto);
+                break;
+            }
+        }
+        
+        if (!pedidoAberto) {
+            console.log('⚠️ Nenhum pedido em aberto');
+            carrinho = [];
+            pedidoAtual = null;
+            return;
+        }
+        
+        // Buscar itens do pedido da tabela pedidoproduto
+        console.log('🔍 Buscando itens do pedido:', pedidoAberto.id_pedido);
+        const itensResponse = await fetch(`${API_BASE_URL}/pedido/${pedidoAberto.id_pedido}/itens`);
+        
+        if (!itensResponse.ok) {
+            console.log('⚠️ Nenhum item encontrado');
+            carrinho = [];
+            return;
+        }
+        
+        let itens = await itensResponse.json();
+        console.log('📋 Itens recebidos:', itens);
+        
+        if (!Array.isArray(itens)) {
+            itens = [];
+        }
+        
+        // Converter para formato do carrinho com imagem correta
+        carrinho = itens.map(item => ({
+            id_produto: item.id_produto,
+            nome_produto: item.nome_produto,
+            preco: parseFloat(item.preco_unitario),
+            imagem_path: item.imagem_produto ? `http://localhost:3001${item.imagem_produto}` : null,
+            nome_categoria: item.nome_categoria || 'Sem categoria',
+            quantidade: parseInt(item.quantidade)
+        }));
+        
+        console.log('✅ Carrinho carregado do banco:', carrinho);
+    } catch (error) {
+        console.error('❌ Erro ao carregar carrinho do banco:', error);
+        carrinho = [];
+        pedidoAtual = null;
     }
 }
 
-// Função para salvar carrinho no localStorage
-function salvarCarrinho() {
-    localStorage.setItem('carrinho', JSON.stringify(carrinho));
+// Função para salvar item no banco
+async function salvarItemNoBanco(idProduto, quantidade, preco) {
+    if (!pedidoAtual) return;
+    
+    try {
+        await fetch(`${API_BASE_URL}/pedidoproduto/carrinho`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id_pedido: pedidoAtual.id_pedido,
+                id_produto: idProduto,
+                quantidade: quantidade,
+                preco_unitario: preco
+            })
+        });
+    } catch (error) {
+        console.error('Erro ao salvar item no banco:', error);
+    }
 }
 
 // Função para adicionar item ao carrinho (será chamada de outras páginas)
@@ -145,41 +295,65 @@ function adicionarAoCarrinho(produto, quantidade = 1) {
 }
 
 // Função para remover item do carrinho
-function removerDoCarrinho(idProduto) {
+async function removerDoCarrinho(idProduto) {
     const index = carrinho.findIndex(item => item.id_produto === idProduto);
     if (index !== -1) {
         const nomeItem = carrinho[index].nome_produto;
         carrinho.splice(index, 1);
-        salvarCarrinho();
+        
+        // Remover do banco
+        if (pedidoAtual) {
+            try {
+                await fetch(`${API_BASE_URL}/pedidoproduto/${pedidoAtual.id_pedido}/${idProduto}`, {
+                    method: 'DELETE'
+                });
+            } catch (error) {
+                console.error('Erro ao remover item do banco:', error);
+            }
+        }
+        
         atualizarInterface();
         mostrarMensagem(`${nomeItem} removido do carrinho!`, 'info');
     }
 }
 
 // Função para atualizar quantidade de um item
-function atualizarQuantidade(idProduto, novaQuantidade) {
+async function atualizarQuantidade(idProduto, novaQuantidade) {
     const item = carrinho.find(item => item.id_produto === idProduto);
     if (item) {
         if (novaQuantidade <= 0) {
-            removerDoCarrinho(idProduto);
+            await removerDoCarrinho(idProduto);
         } else {
             item.quantidade = novaQuantidade;
-            salvarCarrinho();
+            if (pedidoAtual) {
+                await salvarItemNoBanco(idProduto, novaQuantidade, item.preco);
+            }
             atualizarInterface();
         }
     }
 }
 
 // Função para limpar carrinho
-function limparCarrinho() {
+async function limparCarrinho() {
     if (carrinho.length === 0) {
         mostrarMensagem('O carrinho já está vazio!', 'info');
         return;
     }
     
     if (confirm('Tem certeza que deseja limpar todo o carrinho?')) {
+        // Deletar pedido do banco se existir
+        if (pedidoAtual) {
+            try {
+                await fetch(`${API_BASE_URL}/pedido/${pedidoAtual.id_pedido}`, {
+                    method: 'DELETE'
+                });
+                pedidoAtual = null;
+            } catch (error) {
+                console.error('Erro ao deletar pedido:', error);
+            }
+        }
+        
         carrinho = [];
-        salvarCarrinho();
         atualizarInterface();
         mostrarMensagem('Carrinho limpo com sucesso!', 'success');
     }
@@ -330,7 +504,7 @@ function fecharModal(modalId) {
     document.getElementById(modalId).style.display = 'none';
 }
 
-// ======= AJUSTE AQUI: criarPedido sem enviar itens ainda =======
+// Criar pedido
 async function criarPedido() {
     try {
         const cpf = cpfInput.value.replace(/\D/g, '');
@@ -343,7 +517,7 @@ async function criarPedido() {
             valor_total: calcularTotal()
         };
 
-        const response = await fetch(`${API_BASE_URL}/pedidos`, {
+        const response = await fetch(`${API_BASE_URL}/pedido`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dadosPedido)
@@ -351,11 +525,11 @@ async function criarPedido() {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.message || 'Erro ao criar pedido');
+            throw new Error(errorData.error || 'Erro ao criar pedido');
         }
 
         const resultado = await response.json();
-        pedidoAtual = resultado; // guarda o pedido criado
+        pedidoAtual = resultado;
 
         // Fechar modal de confirmação
         fecharModal('modalConfirmacaoPedido');
@@ -375,14 +549,23 @@ async function criarPedido() {
     }
 }
 
-// ======= AJUSTE AQUI: finalizarPagamento envia itens e pagamento =======
+// Finalizar pagamento
 async function finalizarPagamento() {
     try {
         if (!pedidoAtual) throw new Error('Nenhum pedido encontrado');
 
         const formaPagamentoId = formaPagamentoSelect.value;
+        const formaPagamentoNome = formasPagamento.find(f => f.id_forma_pagamento == formaPagamentoId)?.nome_forma?.toLowerCase() || '';
 
-        // 1️⃣ Enviar pedidoproduto
+        // 1️⃣ Se for cartão, validar antes
+        if (formaPagamentoNome.includes('cartao') || formaPagamentoNome.includes('cartão')) {
+            const validarCartao = confirm('Deseja validar os dados do cartão?\n\nPara este exemplo, qualquer cartão será aceito.');
+            if (!validarCartao) {
+                return;
+            }
+        }
+
+        // 2️⃣ Enviar pedidoproduto
         const itensPedido = carrinho.map(item => ({
             id_pedido: pedidoAtual.id_pedido,
             id_produto: item.id_produto,
@@ -398,17 +581,17 @@ async function finalizarPagamento() {
 
         if (!responseItens.ok) {
             const errorData = await responseItens.json();
-            throw new Error(errorData.message || 'Erro ao enviar itens do pedido');
+            throw new Error(errorData.error || 'Erro ao enviar itens do pedido');
         }
 
-        // 2️⃣ Enviar pagamento
+        // 3️⃣ Enviar pagamento
         const dadosPagamento = {
             id_pedido: pedidoAtual.id_pedido,
             id_forma_pagamento: formaPagamentoId,
             valor_total: calcularTotal()
         };
 
-        const responsePagamento = await fetch(`${API_BASE_URL}/pagamentos`, {
+        const responsePagamento = await fetch(`${API_BASE_URL}/pagamento`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dadosPagamento)
@@ -416,15 +599,20 @@ async function finalizarPagamento() {
 
         if (!responsePagamento.ok) {
             const errorData = await responsePagamento.json();
-            throw new Error(errorData.message || 'Erro ao processar pagamento');
+            throw new Error(errorData.error || 'Erro ao processar pagamento');
         }
 
-        // 3️⃣ Limpar carrinho
+        const resultadoPagamento = await responsePagamento.json();
+
+        // 4️⃣ Se for PIX, mostrar QR Code
+        if (resultadoPagamento.qr_code_pix) {
+            alert(`PAGAMENTO VIA PIX\n\nValor: R$ ${resultadoPagamento.qr_code_pix.valor.toFixed(2)}\nChave PIX: ${resultadoPagamento.qr_code_pix.chave}\n\n${resultadoPagamento.qr_code_pix.mensagem}\n\nPayload: ${resultadoPagamento.qr_code_pix.payload}`);
+        }
+
+        // 5️⃣ Limpar carrinho
         carrinho = [];
-        salvarCarrinho();
 
         // Limpar formulário
-        cpfInput.value = '';
         observacoesInput.value = '';
         formaPagamentoSelect.selectedIndex = 0;
 

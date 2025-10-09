@@ -1,6 +1,9 @@
 // Configuração da API
 const API_BASE_URL = 'http://localhost:3001';
 
+// Variável para armazenar produtos carregados
+let produtosCarregados = [];
+
 // Elementos do DOM
 const filtroCategoria = document.getElementById('filtroCategoria');
 const btnFiltrar = document.getElementById('btnFiltrar');
@@ -10,10 +13,32 @@ const emptyMessage = document.getElementById('emptyMessage');
 const messageContainer = document.getElementById('messageContainer');
 
 // Carregar dados ao inicializar
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🚀 Cardápio carregado, iniciando...');
+    await verificarEMostrarUsuario();
     carregarCategorias();
     carregarProdutos();
+    atualizarContadorCarrinho();
 });
+
+// Função para verificar e mostrar informações do usuário
+async function verificarEMostrarUsuario() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/login/verificaSePessoaEstaLogada`, {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (data.status === 'ok' && data.cpf) {
+            document.getElementById('nomeUsuarioCardapio').textContent = data.nome || 'Usuário';
+            console.log('👤 Usuário logado:', data.nome, '- CPF:', data.cpf);
+        } else {
+            document.getElementById('nomeUsuarioCardapio').textContent = 'Não logado';
+        }
+    } catch (error) {
+        console.error('Erro ao verificar usuário:', error);
+    }
+}
 
 // Event Listeners
 btnFiltrar.addEventListener('click', filtrarProdutos);
@@ -53,6 +78,7 @@ async function carregarCategorias() {
 // Função para carregar produtos
 async function carregarProdutos(categoriaId = 'todas') {
     try {
+        console.log('📦 Carregando produtos...');
         mostrarLoading(true);
         
         let url = `${API_BASE_URL}/cardapio/produtos`;
@@ -60,18 +86,22 @@ async function carregarProdutos(categoriaId = 'todas') {
             url += `?categoria_id=${categoriaId}`;
         }
 
+        console.log('🌐 URL:', url);
         const response = await fetch(url);
+        console.log('📡 Response status:', response.status);
+        
         if (!response.ok) throw new Error('Erro ao carregar produtos');
 
         const produtos = await response.json();
+        console.log('✅ Produtos carregados:', produtos.length);
         
         mostrarLoading(false);
         renderizarProdutos(produtos);
         
     } catch (error) {
-        console.error('Erro ao carregar produtos:', error);
+        console.error('❌ Erro ao carregar produtos:', error);
         mostrarLoading(false);
-        mostrarMensagem('Erro ao carregar produtos', 'error');
+        mostrarMensagem('Erro ao carregar produtos: ' + error.message, 'error');
     }
 }
 
@@ -95,9 +125,12 @@ function mostrarLoading(mostrar) {
 
 // Função para renderizar produtos
 function renderizarProdutos(produtos) {
+    console.log('🎨 Renderizando produtos:', produtos);
+    produtosCarregados = produtos; // Armazenar produtos para uso posterior
     produtosContainer.innerHTML = '';
     
     if (produtos.length === 0) {
+        console.log('⚠️ Nenhum produto para exibir');
         produtosContainer.style.display = 'none';
         emptyMessage.style.display = 'block';
         return;
@@ -110,6 +143,8 @@ function renderizarProdutos(produtos) {
         const produtoCard = criarCardProduto(produto);
         produtosContainer.appendChild(produtoCard);
     });
+    
+    console.log('✅ Produtos renderizados com sucesso');
 }
 
 // Função para criar card do produto
@@ -131,9 +166,15 @@ function criarCardProduto(produto) {
         estoqueTexto = `Últimas ${produto.quantidade_estoque} unidades`;
     }
     
-    // HTML da imagem
-    const imagemHtml = produto.imagem_produto 
-        ? `<img src="${produto.imagem_produto}" alt="${produto.nome_produto}">`
+    // HTML da imagem - ajustar caminho se necessário
+    let imagemSrc = produto.imagem_produto;
+    if (imagemSrc && !imagemSrc.startsWith('http')) {
+        // Se não começar com http, adicionar o caminho do servidor
+        imagemSrc = `http://localhost:3001${imagemSrc}`;
+    }
+    
+    const imagemHtml = imagemSrc 
+        ? `<img src="${imagemSrc}" alt="${produto.nome_produto}" onerror="this.parentElement.innerHTML='<div class=\\'sem-imagem\\'>Sem imagem</div>'">`
         : '<div class="sem-imagem">Sem imagem disponível</div>';
     
     card.innerHTML = `
@@ -155,12 +196,32 @@ function criarCardProduto(produto) {
     return card;
 }
 
-
-// Variável para armazenar produtos carregados
-let produtosCarregados = [];
-
 // Função para adicionar produto ao carrinho
-function adicionarProdutoAoCarrinho(idProduto) {
+async function adicionarProdutoAoCarrinho(idProduto) {
+    // 🔒 VERIFICAR SE USUÁRIO ESTÁ LOGADO
+    let usuarioLogado = null;
+    try {
+        const response = await fetch(`${API_BASE_URL}/login/verificaSePessoaEstaLogada`, {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (data.status !== 'ok' || !data.cpf) {
+            // Usuário NÃO está logado
+            if (confirm('⚠️ Você precisa fazer login para adicionar produtos ao carrinho!\n\nDeseja ir para a página de login?')) {
+                window.location.href = '../login/login.html';
+            }
+            return;
+        }
+        
+        usuarioLogado = data;
+    } catch (error) {
+        console.error('Erro ao verificar login:', error);
+        alert('⚠️ Erro ao verificar login. Por favor, faça login novamente.');
+        return;
+    }
+    
+    // Usuário está logado, continuar com a adição
     const produto = produtosCarregados.find(p => p.id_produto === idProduto);
     if (!produto) {
         mostrarMensagem('Produto não encontrado!', 'error');
@@ -172,89 +233,162 @@ function adicionarProdutoAoCarrinho(idProduto) {
         return;
     }
     
-    // Carregar carrinho atual
-    let carrinho = [];
-    const carrinhoSalvo = localStorage.getItem('carrinho');
-    if (carrinhoSalvo) {
-        try {
-            carrinho = JSON.parse(carrinhoSalvo);
-        } catch (error) {
-            console.error('Erro ao carregar carrinho:', error);
+    try {
+        console.log('🛒 Adicionando produto ao carrinho e salvando no banco...', { idProduto, cpf: usuarioLogado.cpf });
+        
+        // 1. Buscar ou criar pedido em aberto (sem pagamento) do usuário
+        const pedidosResponse = await fetch(`${API_BASE_URL}/pedido/cpf/${usuarioLogado.cpf}`);
+        const pedidos = await pedidosResponse.json();
+        
+        // Filtrar pedidos sem pagamento
+        let pedidoAberto = null;
+        const pagamentoResponse = await fetch(`${API_BASE_URL}/pagamento`);
+        const pagamentos = await pagamentoResponse.json();
+        
+        for (const p of pedidos) {
+            const temPagamento = pagamentos.some(pag => pag.id_pedido === p.id_pedido);
+            if (!temPagamento) {
+                pedidoAberto = p;
+                break;
+            }
         }
-    }
-    
-    // Verificar se produto já está no carrinho
-    const itemExistente = carrinho.find(item => item.id_produto === produto.id_produto);
-    
-    if (itemExistente) {
-        if (itemExistente.quantidade >= produto.quantidade_estoque) {
+        
+        // 2. Se não existe pedido em aberto, criar um novo
+        if (!pedidoAberto) {
+            console.log('📦 Criando novo pedido para CPF:', usuarioLogado.cpf);
+            const novoPedidoResponse = await fetch(`${API_BASE_URL}/pedido`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cpf: usuarioLogado.cpf,
+                    valor_total: 0
+                })
+            });
+            
+            console.log('📡 Status da criação:', novoPedidoResponse.status);
+            
+            if (!novoPedidoResponse.ok) {
+                const errorData = await novoPedidoResponse.json();
+                console.error('❌ Erro ao criar pedido:', errorData);
+                throw new Error(errorData.error || 'Erro ao criar pedido');
+            }
+            
+            pedidoAberto = await novoPedidoResponse.json();
+            console.log('✅ Novo pedido criado:', pedidoAberto);
+        }
+        
+        // 3. Buscar itens atuais do pedido
+        const itensResponse = await fetch(`${API_BASE_URL}/pedido/${pedidoAberto.id_pedido}/itens`);
+        let itens = await itensResponse.json();
+        
+        if (!Array.isArray(itens)) {
+            itens = [];
+        }
+        
+        // 4. Verificar se produto já está no pedido
+        const itemExistente = itens.find(item => item.id_produto === idProduto);
+        const novaQuantidade = itemExistente ? itemExistente.quantidade + 1 : 1;
+        
+        if (novaQuantidade > produto.quantidade_estoque) {
             mostrarMensagem('Quantidade máxima em estoque já adicionada!', 'warning');
             return;
         }
-        itemExistente.quantidade += 1;
-    } else {
-        carrinho.push({
-            id_produto: produto.id_produto,
-            nome_produto: produto.nome_produto,
-            preco: produto.preco,
-            imagem_path: produto.imagem_path,
-            nome_categoria: produto.nome_categoria,
-            quantidade: 1
+        
+        // 5. Adicionar ou atualizar item no banco
+        const itemResponse = await fetch(`${API_BASE_URL}/pedidoproduto/carrinho`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id_pedido: pedidoAberto.id_pedido,
+                id_produto: idProduto,
+                quantidade: novaQuantidade,
+                preco_unitario: produto.preco
+            })
         });
+        
+        if (!itemResponse.ok) {
+            throw new Error('Erro ao adicionar produto ao pedido');
+        }
+        
+        console.log('✅ Item salvo no banco');
+        
+        // 6. Atualizar valor total do pedido
+        const novoValorTotal = itemExistente 
+            ? pedidoAberto.valor_total + produto.preco 
+            : pedidoAberto.valor_total + (produto.preco * novaQuantidade);
+            
+        await fetch(`${API_BASE_URL}/pedido/${pedidoAberto.id_pedido}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                cpf: pedidoAberto.cpf,
+                data_pedido: pedidoAberto.data_pedido,
+                valor_total: novoValorTotal
+            })
+        });
+        
+        // 7. Atualizar contador do carrinho
+        atualizarContadorCarrinho();
+        
+        // 8. Mostrar mensagem de sucesso
+        mostrarMensagem(`✅ ${produto.nome_produto} adicionado ao carrinho!`, 'success');
+        
+    } catch (error) {
+        console.error('❌ Erro ao adicionar ao carrinho:', error);
+        mostrarMensagem(`❌ Erro: ${error.message}`, 'error');
     }
-    
-    // Salvar carrinho
-    localStorage.setItem('carrinho', JSON.stringify(carrinho));
-    
-    // Atualizar contador do carrinho
-    atualizarContadorCarrinho();
-    
-    // Mostrar mensagem de sucesso
-    mostrarMensagem(`${produto.nome_produto} adicionado ao carrinho!`, 'success');
 }
 
 // Função para atualizar contador do carrinho
-function atualizarContadorCarrinho() {
+async function atualizarContadorCarrinho() {
     const carrinhoCount = document.getElementById('carrinhoCount');
     if (!carrinhoCount) return;
     
-    let carrinho = [];
-    const carrinhoSalvo = localStorage.getItem('carrinho');
-    if (carrinhoSalvo) {
-        try {
-            carrinho = JSON.parse(carrinhoSalvo);
-        } catch (error) {
-            console.error('Erro ao carregar carrinho:', error);
+    try {
+        const response = await fetch(`${API_BASE_URL}/login/verificaSePessoaEstaLogada`, {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (data.status !== 'ok' || !data.cpf) {
+            carrinhoCount.textContent = '0';
+            return;
         }
+        
+        // Buscar pedidos do usuário no banco
+        const pedidosResponse = await fetch(`${API_BASE_URL}/pedido/cpf/${data.cpf}`);
+        const pedidos = await pedidosResponse.json();
+        
+        // Encontrar pedido em aberto
+        const pagamentoResponse = await fetch(`${API_BASE_URL}/pagamento`);
+        const pagamentos = await pagamentoResponse.json();
+        
+        let pedidoAberto = null;
+        for (const p of pedidos) {
+            const temPagamento = pagamentos.some(pag => pag.id_pedido === p.id_pedido);
+            if (!temPagamento) {
+                pedidoAberto = p;
+                break;
+            }
+        }
+        
+        if (!pedidoAberto) {
+            carrinhoCount.textContent = '0';
+            return;
+        }
+        
+        // Buscar itens do pedido
+        const itensResponse = await fetch(`${API_BASE_URL}/pedido/${pedidoAberto.id_pedido}/itens`);
+        let itens = await itensResponse.json();
+        
+        if (!Array.isArray(itens)) {
+            itens = [];
+        }
+        
+        const totalItens = itens.reduce((total, item) => total + item.quantidade, 0);
+        carrinhoCount.textContent = totalItens;
+    } catch (error) {
+        console.error('Erro ao atualizar contador:', error);
+        carrinhoCount.textContent = '0';
     }
-    
-    const totalItens = carrinho.reduce((total, item) => total + item.quantidade, 0);
-    carrinhoCount.textContent = totalItens;
 }
-
-// Atualizar a função renderizarProdutos para armazenar os produtos
-function renderizarProdutos(produtos) {
-    produtosCarregados = produtos; // Armazenar produtos para uso posterior
-    produtosContainer.innerHTML = '';
-    
-    if (produtos.length === 0) {
-        produtosContainer.style.display = 'none';
-        emptyMessage.style.display = 'block';
-        return;
-    }
-    
-    emptyMessage.style.display = 'none';
-    produtosContainer.style.display = 'grid';
-
-    produtos.forEach(produto => {
-        const produtoCard = criarCardProduto(produto);
-        produtosContainer.appendChild(produtoCard);
-    });
-}
-
-// Atualizar contador do carrinho ao carregar a página
-document.addEventListener('DOMContentLoaded', () => {
-    carregarCategorias();
-    carregarProdutos();
-    atualizarContadorCarrinho();
-});

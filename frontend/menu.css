@@ -96,6 +96,11 @@ header {
     to { width: 80%; }
 }
 
+/* Seção de usuário */
+.user-section {
+    position: relative;
+}
+
 /* Botão de login */
 #btnLogin {
     padding: 0.7rem 1.5rem;
@@ -132,6 +137,83 @@ header {
     color: var(--text-dark);
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
+}
+
+/* Informações do usuário logado */
+.user-info {
+    position: relative;
+    padding: 0.8rem 1.8rem;
+    background: linear-gradient(135deg, #6b4226, #8b5a3c);
+    color: white;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: var(--transition);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 2px solid transparent;
+}
+
+.user-info::before {
+    content: '👤';
+    font-size: 1.2rem;
+}
+
+.user-info:hover {
+    background: linear-gradient(135deg, #d9534f, #c9302c);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+#userName {
+    font-family: 'Fredoka', cursive;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Tooltip de logout */
+.logout-tooltip {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: rgba(217, 83, 79, 0.95);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition);
+    box-shadow: var(--shadow-md);
+    z-index: 1000;
+}
+
+.logout-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    right: 20px;
+    width: 10px;
+    height: 10px;
+    background: rgba(217, 83, 79, 0.95);
+    transform: rotate(45deg);
+}
+
+.user-info:hover .logout-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(5px);
+}
+
+/* Classe hidden */
+.hidden {
+    display: none !important;
 }
 
 /* Menu */

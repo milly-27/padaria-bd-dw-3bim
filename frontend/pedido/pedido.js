@@ -29,7 +29,7 @@ btnCancelar.addEventListener('click', cancelarOperacao);
 btnSalvar.addEventListener('click', salvarOperacao);
 
 mostrarBotoes(true, false, false, false, false, false);
-bloquearCampos(false); // Inicia com searchId liberado e demais campos bloqueados
+bloquearCampos(false);
 
 // Função para mostrar mensagens
 function mostrarMensagem(texto, tipo = 'info') {
@@ -41,10 +41,7 @@ function mostrarMensagem(texto, tipo = 'info') {
 
 // FUNÇÃO CORRIGIDA - Agora separa searchId dos campos editáveis
 function bloquearCampos(liberarCamposEdicao) {
-    // searchId sempre fica no estado oposto dos campos de edição
     document.getElementById("searchId").disabled = liberarCamposEdicao;
-    
-    // Campos de edição seguem o parâmetro
     document.getElementById("data_pedido").disabled = !liberarCamposEdicao;
     document.getElementById("cpf").disabled = !liberarCamposEdicao;
     document.getElementById("valor_total").disabled = !liberarCamposEdicao;
@@ -84,7 +81,7 @@ async function buscarPedido() {
         mostrarMensagem('Digite um ID para buscar', 'warning');
         return;
     }
-    bloquearCampos(false); // Bloqueia campos de edição após buscar
+    bloquearCampos(false);
     searchId.focus();
 
     try {
@@ -151,16 +148,16 @@ async function incluirPedido() {
     currentPersonId = searchId.value;
     limparFormulario();
     searchId.value = currentPersonId;
-    bloquearCampos(true); // Libera campos de edição
+    bloquearCampos(true);
     mostrarBotoes(false, false, false, false, true, true);
     document.getElementById('data_pedido').focus();
     operacao = 'incluir';
 }
 
-// FUNÇÃO ALTERARPED IDO CORRIGIDA
+// FUNÇÃO ALTERARPEDIDO CORRIGIDA
 async function alterarPedido() {
     mostrarMensagem('Altere os dados necessários!', 'info');
-    bloquearCampos(true); // Libera campos de edição, bloqueia searchId
+    bloquearCampos(true);
     mostrarBotoes(false, false, false, false, true, true);
     document.getElementById('data_pedido').focus();
     operacao = 'alterar';
@@ -171,7 +168,7 @@ async function excluirPedido() {
     mostrarMensagem('Excluindo pedido...', 'info');
     currentPersonId = searchId.value;
     searchId.disabled = true;
-    bloquearCampos(false); // Bloqueia campos de edição
+    bloquearCampos(false);
     mostrarBotoes(false, false, false, false, true, true);
     operacao = 'excluir';
 }
@@ -180,7 +177,6 @@ async function excluirPedido() {
 async function salvarOperacao() {
     console.log('Operação:', operacao + ' - currentPersonId: ' + currentPersonId + ' - searchId: ' + searchId.value);
 
-    // CORREÇÃO: Pegar valores diretamente dos inputs, não do FormData
     const pedido = {
         id_pedido: searchId.value,
         data_pedido: document.getElementById('data_pedido').value,
@@ -188,7 +184,6 @@ async function salvarOperacao() {
         valor_total: document.getElementById('valor_total').value,
     };
 
-    // VALIDAÇÃO: Verificar se campos obrigatórios estão preenchidos
     if (operacao !== 'excluir') {
         if (!pedido.data_pedido) {
             mostrarMensagem('Data do pedido é obrigatória!', 'error');
@@ -245,7 +240,7 @@ async function salvarOperacao() {
     }
 
     mostrarBotoes(true, false, false, false, false, false);
-    bloquearCampos(false); // Volta ao estado inicial
+    bloquearCampos(false);
     document.getElementById('searchId').focus();
 }
 
@@ -348,55 +343,7 @@ function atualizarValorTotal() {
         }
     });
     
-    // Atualiza o campo valor_total
     document.getElementById('valor_total').value = total.toFixed(2);
-}
-
-// Função para carregar lista de pedidos
-async function carregarPedidos() {
-    try {
-        const rota = `${API_BASE_URL}/pedido`;
-        const response = await fetch(rota);
-
-        if (response.ok) {
-            const pedidos = await response.json();
-            if (pedidos.length > 0) {
-                renderizarTabelaPedidos(pedidos);
-            } else {
-                throw new Error('Erro ao carregar itens do pedido');
-            }
-        }
-    } catch (error) {
-        console.error('Erro:', error);
-        mostrarMensagem('Erro ao carregar lista de pedidos', 'error');
-    }
-}
-
-// Função para renderizar tabela de pedidos
-function renderizarTabelaPedidos(pedidos) {
-    pedidosTableBody.innerHTML = '';
-
-    pedidos.forEach(pedido => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-                    <td>
-                        <button class="btn-id" onclick="selecionarPedido(${pedido.id_pedido})">
-                            ${pedido.id_pedido}
-                        </button>
-                    </td>
-                    <td>${formatarData(pedido.data_pedido)}</td>                  
-                    <td>${pedido.cpf}</td>                  
-                    <td>${pedido.valor_total}</td>                  
-                                 
-                `;
-        pedidosTableBody.appendChild(row);
-    });
-}
-
-// Função para selecionar pedido da tabela
-async function selecionarPedido(id) {
-    searchId.value = id;
-    await buscarPedido();
 }
 
 // Função para adicionar uma nova linha vazia para um item na tabela de itens do pedido.
